@@ -640,8 +640,8 @@ function renderSummary() {
   ];
   const note = `<div class="summary-note">`
     + `<span class="sn-star">*</span> Not Started + On Track + Delayed + Completed = Total (${total}). `
-    + `Revised / New is a separate tag — a revised tactic still has one of the four statuses above and is also counted here, `
-    + `plus any newly added tactics — so it is not part of the total.</div>`;
+    + `Revised / New is a separate tag: a revised tactic still has one of the four statuses above and is also counted here, `
+    + `plus any newly added tactics, so it is not part of the total.</div>`;
   document.getElementById('summaryRow').innerHTML = stats.map(s =>
     `<div class="stat${s.overlay ? ' overlay' : ''}"><span class="dot" style="background:${s.color}"></span><span class="num">${s.count}</span><span class="lbl">${s.label}${s.overlay ? '<span class="sn-star">*</span>' : ''}</span></div>`
   ).join('') + note;
