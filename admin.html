@@ -125,12 +125,46 @@
     gap: 10px;
     align-items: baseline;
   }
-  .at-risk-item .ar-id { font-weight: 700; color: var(--not-started); min-width: 36px; }
-  .at-risk-item .ar-score { font-weight: 700; color: #b38600; }
+  .at-risk-item .ar-id { font-weight: 700; color: var(--not-started); min-width: 42px; }
+  .at-risk-item .ar-status {
+    font-weight: 700;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    align-self: center;
+  }
+  .at-risk-item .ar-status.delayed { background: #fff0c2; color: #b38600; border: 1px solid var(--delayed); }
+  .at-risk-item .ar-status.not-started { background: #e2f4fb; color: #0b6f97; border: 1px solid var(--not-started); }
   .at-risk-item .ar-desc { color: var(--text); flex: 1; }
   .at-risk-item .ar-owner { color: var(--text-light); font-size: 0.72rem; }
   .at-risk-item:hover { background: #fff3c2; border-radius: 4px; }
   .at-risk-item:hover .ar-id { text-decoration: underline; }
+  .at-risk-group + .at-risk-group { margin-top: 4px; }
+  .at-risk-group .ar-group-title {
+    font-size: 0.72rem;
+    letter-spacing: 0.4px;
+    margin: 12px 0 5px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(179,134,0,0.35);
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+  .ar-group-num { font-weight: 700; color: #8a6a00; text-transform: uppercase; white-space: nowrap; }
+  .ar-group-theme { font-weight: 600; color: #a07a1a; }
+  .ar-group-theme::before { content: '· '; color: #c9a94a; }
+  .at-risk-group:first-of-type .ar-group-title { margin-top: 4px; padding-top: 0; border-top: none; }
+  .ar-group-count {
+    font-size: 0.64rem;
+    background: rgba(179,134,0,0.15);
+    color: #8a6a00;
+    border-radius: 8px;
+    padding: 0 7px;
+    font-weight: 700;
+  }
   .goal.flash { animation: goalFlash 1.6s ease; }
   @keyframes goalFlash {
     0%, 100% { box-shadow: 0 0 0 0 rgba(255,191,0,0); }
@@ -261,6 +295,19 @@
   }
   .summary-inline .stat .num { font-weight: 700; font-size: 1.35rem; line-height: 1; }
   .summary-inline .stat .lbl { color: var(--text-light); font-size: 0.85rem; }
+  .summary-inline .stat.overlay .lbl { font-style: italic; }
+  .sn-star { color: var(--changed); font-weight: 700; }
+  .summary-inline .summary-note {
+    grid-column: 1 / -1;
+    font-size: 0.72rem;
+    color: var(--text-light);
+    line-height: 1.4;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 2px;
+    white-space: normal;
+    max-width: 460px;
+  }
   .summary-card.not-started .count { color: var(--not-started); }
   .summary-card.on-track .count { color: var(--on-track); }
   .summary-card.delayed .count { color: var(--delayed); }
@@ -851,29 +898,74 @@ function jumpToGoal(goalId) {
   }, 50);
 }
 
+// "At risk" is defined at the TACTIC level (set with ISPE leadership): any tactic whose
+// reported status is Not Started or In Progress - Delayed is at risk, regardless of the
+// narrative in its notes.
+const AT_RISK_STATUSES = ['In Progress - Delayed', 'Not Started'];
+// Short themes for the at-risk objective sub-headers (distilled from each
+// objective's full description in the strategic plan).
+const OBJECTIVE_THEMES = {
+  1: 'Emerging & Innovative Topics',
+  2: 'Expertise & Innovation',
+  3: 'Organizational Structure',
+  4: 'Financial Diversification',
+  5: 'Global Engagement & Leadership',
+  6: 'Career Development',
+  7: 'Diversity & Inclusion',
+  8: 'External Partnerships',
+};
 function renderAtRisk() {
   const el = document.getElementById('atRiskPanel');
   if (!el) return;
-  const atRisk = [];
-  data.objectives.forEach(o => o.goals.forEach(g => {
-    const { score, max, pct } = computeGoalProgress(g);
-    if (pct < 50) atRisk.push({ g, o, pct, score, max });
-  }));
-  if (atRisk.length === 0) { el.innerHTML = ''; return; }
-  atRisk.sort((a, b) => a.pct - b.pct);
-  el.innerHTML = `
-    <h4>At Risk — ${atRisk.length} goal${atRisk.length>1?'s':''} below 50%</h4>
-    <div class="at-risk-list">
-      ${atRisk.map(({g, score, max}) => `
+  // Delayed first (actively behind schedule), then Not Started; each ordered by tactic id.
+  const order = { 'In Progress - Delayed': 0, 'Not Started': 1 };
+  let total = 0, totalDelayed = 0;
+  const groups = [];
+  data.objectives.forEach(o => {
+    const items = [];
+    o.goals.forEach(g => g.tactics.forEach(t => {
+      if (AT_RISK_STATUSES.includes(t.status)) items.push({ t, g });
+    }));
+    if (items.length === 0) return;
+    items.sort((a, b) =>
+      (order[a.t.status] - order[b.t.status]) ||
+      a.t.tactic_id.localeCompare(b.t.tactic_id, undefined, { numeric: true }));
+    total += items.length;
+    totalDelayed += items.filter(x => x.t.status === 'In Progress - Delayed').length;
+    groups.push({ o, items });
+  });
+  if (total === 0) { el.innerHTML = ''; return; }
+  const totalNotStarted = total - totalDelayed;
+  const parts = [];
+  if (totalDelayed) parts.push(`${totalDelayed} delayed`);
+  if (totalNotStarted) parts.push(`${totalNotStarted} not started`);
+  const renderItem = ({t, g}) => {
+    const isDelayed = t.status === 'In Progress - Delayed';
+    const cls = isDelayed ? 'delayed' : 'not-started';
+    const label = isDelayed ? 'Delayed' : 'Not Started';
+    return `
         <div class="at-risk-item" onclick="jumpToGoal('${g.goal_id}')" style="cursor:pointer;">
-          <span class="ar-id">${g.goal_id}</span>
-          <span class="ar-desc">${g.description.replace(/^Goal\s+\d+\.\d+:?\s*/i, '').replace(/^Revised Goal:?\s*/i, '')}
+          <span class="ar-id">${t.tactic_id}</span>
+          <span class="ar-desc">${t.description}
             <span class="ar-owner">· ${g.responsible_committee}</span>
           </span>
-          <span class="ar-score">${score}/${max}</span>
+          <span class="ar-status ${cls}">${label}</span>
+        </div>`;
+  };
+  el.innerHTML = `
+    <h4>At Risk — ${total} tactic${total>1?'s':''} · ${parts.join(', ')}</h4>
+    ${groups.map(({o, items}) => `
+      <div class="at-risk-group">
+        <div class="ar-group-title">
+          <span class="ar-group-num">Objective ${o.objective_number}</span>
+          ${OBJECTIVE_THEMES[o.objective_number] ? `<span class="ar-group-theme">${OBJECTIVE_THEMES[o.objective_number]}</span>` : ''}
+          <span class="ar-group-count">${items.length}</span>
         </div>
-      `).join('')}
-    </div>
+        <div class="at-risk-list">
+          ${items.map(renderItem).join('')}
+        </div>
+      </div>
+    `).join('')}
   `;
 }
 
@@ -893,11 +985,15 @@ function renderSummary() {
     { label: 'On Track',    count: counts['In Progress - On Track']||0, color: 'var(--on-track)' },
     { label: 'Delayed',     count: counts['In Progress - Delayed']||0,  color: 'var(--delayed)' },
     { label: 'Completed',   count: counts['Completed'] || 0,           color: 'var(--completed)' },
-    { label: 'Revised / New', count: revisedCount,                     color: 'var(--changed)' },
+    { label: 'Revised / New', count: revisedCount,                     color: 'var(--changed)', overlay: true },
   ];
+  const note = `<div class="summary-note">`
+    + `<span class="sn-star">*</span> Not Started + On Track + Delayed + Completed = Total (${total}). `
+    + `Revised / New is a separate tag — a revised tactic still has one of the four statuses above and is also counted here, `
+    + `plus any newly added tactics — so it is not part of the total.</div>`;
   document.getElementById('summaryRow').innerHTML = stats.map(s =>
-    `<div class="stat"><span class="dot" style="background:${s.color}"></span><span class="num">${s.count}</span><span class="lbl">${s.label}</span></div>`
-  ).join('');
+    `<div class="stat${s.overlay ? ' overlay' : ''}"><span class="dot" style="background:${s.color}"></span><span class="num">${s.count}</span><span class="lbl">${s.label}${s.overlay ? '<span class="sn-star">*</span>' : ''}</span></div>`
+  ).join('') + note;
 }
 
 function getStatusCounts() {

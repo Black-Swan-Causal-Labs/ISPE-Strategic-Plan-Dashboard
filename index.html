@@ -171,6 +171,19 @@
   }
   .summary-inline .stat .num { font-weight: 700; font-size: 1.35rem; line-height: 1; }
   .summary-inline .stat .lbl { color: var(--text-light); font-size: 0.85rem; }
+  .summary-inline .stat.overlay .lbl { font-style: italic; }
+  .sn-star { color: var(--changed); font-weight: 700; }
+  .summary-inline .summary-note {
+    grid-column: 1 / -1;
+    font-size: 0.72rem;
+    color: var(--text-light);
+    line-height: 1.4;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 2px;
+    white-space: normal;
+    max-width: 460px;
+  }
   .summary-card.not-started .count { color: var(--not-started); }
   .summary-card.on-track .count { color: var(--on-track); }
   .summary-card.delayed .count { color: var(--delayed); }
@@ -570,9 +583,6 @@
 </div>
 
 <div class="container">
-  <!-- At Risk Panel (standalone) -->
-  <div id="atRiskPanel" class="at-risk-panel" style="margin-bottom:20px;"></div>
-
   <!-- Chart + Filters -->
   <div class="chart-filter-row">
     <div class="chart-card">
@@ -657,7 +667,7 @@ async function init() {
 function renderAll() {
   renderSummary();
   renderChart();
-  renderAtRisk();
+  // At-risk panel is admin-only (see admin.html); intentionally not rendered here.
   renderChanges();
   renderObjectives();
 }
@@ -763,11 +773,15 @@ function renderSummary() {
     { label: 'On Track',    count: counts['In Progress - On Track']||0, color: 'var(--on-track)' },
     { label: 'Delayed',     count: counts['In Progress - Delayed']||0,  color: 'var(--delayed)' },
     { label: 'Completed',   count: counts['Completed'] || 0,           color: 'var(--completed)' },
-    { label: 'Revised / New', count: revisedCount,                     color: 'var(--changed)' },
+    { label: 'Revised / New', count: revisedCount,                     color: 'var(--changed)', overlay: true },
   ];
+  const note = `<div class="summary-note">`
+    + `<span class="sn-star">*</span> Not Started + On Track + Delayed + Completed = Total (${total}). `
+    + `Revised / New is a separate tag — a revised tactic still has one of the four statuses above and is also counted here, `
+    + `plus any newly added tactics — so it is not part of the total.</div>`;
   document.getElementById('summaryRow').innerHTML = stats.map(s =>
-    `<div class="stat"><span class="dot" style="background:${s.color}"></span><span class="num">${s.count}</span><span class="lbl">${s.label}</span></div>`
-  ).join('');
+    `<div class="stat${s.overlay ? ' overlay' : ''}"><span class="dot" style="background:${s.color}"></span><span class="num">${s.count}</span><span class="lbl">${s.label}${s.overlay ? '<span class="sn-star">*</span>' : ''}</span></div>`
+  ).join('') + note;
 }
 
 function getStatusCounts() {
