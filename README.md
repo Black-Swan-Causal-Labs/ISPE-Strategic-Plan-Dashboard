@@ -17,7 +17,7 @@ Repo → **Settings → Pages → Build and deployment**:
 - **Branch:** `public-deploy` — folder `/ (root)` → **Save**
 
 The site publishes at `https://<account>.github.io/<repo>/` (for this account/repo:
-`https://ispe.github.io/ISPE-Strategic-Plan-Dashboard/`). First build takes ~1 minute.
+`https://ispe-sp.github.io/ISPE-Strategic-Plan-Dashboard/`). First build takes ~1 minute.
 
 ## Embed on the ISPE website
 Paste the responsive iframe snippet from the handoff notes into the page where the dashboard
