@@ -782,6 +782,11 @@
         <button class="admin-btn changelog" onclick="showChangelog()">Change Log</button>
         <button class="admin-btn publish" onclick="publishReadOnly()">Publish</button>
       </div>
+      <div class="admin-divider"></div>
+      <div class="admin-btn-group">
+        <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-light);">As-of date:</label>
+        <input type="month" id="dateInput" class="search-box" style="width: 170px;" onchange="updateDate(this.value)">
+      </div>
     </div>
     <div id="atRiskPanel" class="at-risk-panel"></div>
   </div>
@@ -805,10 +810,6 @@
       <div class="filter-summary-grid" style="margin-top: 14px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start;">
         <div>
           <input type="text" class="search-box" style="width:100%;max-width:640px;" placeholder="Search by keyword such as, 'scientific policy' or by goal/objective such as &quot;What is goal 3.1?&quot;" oninput="searchFilter(this.value)">
-          <div style="margin-top: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-light);">Update Date:</label>
-            <input type="month" id="dateInput" class="search-box" style="width: 180px;" onchange="updateDate(this.value)">
-          </div>
         </div>
         <div id="summaryRow" class="summary-inline"></div>
       </div>
