@@ -6,5 +6,7 @@
 !admin.html
 !data.json
 !csv_to_dashboard_json.py
+!docs/
+!docs/*.md
 # NOTE: SP Plan-SurveyExport.csv is intentionally NOT allowlisted — it contains
 # respondent PII (names, emails, IPs). Keep it out of the repo.
