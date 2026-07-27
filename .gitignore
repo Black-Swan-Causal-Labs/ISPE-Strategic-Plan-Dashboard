@@ -5,6 +5,11 @@
 !newlogo.jpg
 !README.md
 !.gitignore
+# Self-hosted Source Serif 4 (SIL OFL 1.1). index.html references these by
+# relative path — without them the dashboard silently falls back to Georgia.
+!fonts/
+!fonts/*.woff2
+!fonts/LICENSE.txt
 # admin.html and csv_to_dashboard_json.py are intentionally NOT on this branch —
 # they live on `main` and must never be published to the public Pages site.
 # SP Plan-SurveyExport.csv is intentionally NOT allowlisted — it contains

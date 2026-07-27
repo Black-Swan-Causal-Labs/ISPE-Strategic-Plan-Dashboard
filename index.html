@@ -3,14 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // Embedded-context detection, deliberately inline and before the stylesheet
+  // so the embedded layout never flashes as sticky on first paint.
+  //
+  // Inside an iframe, position:sticky pins to the IFRAME's viewport rather than
+  // the host page. The header plus filter row are ~335px, which is over half of
+  // a typical 600px CMS embed — the reader would scroll a ~265px slot with the
+  // chrome frozen above it, and hit a scrollbar-inside-a-scrollbar. When
+  // embedded we let the page flow normally and let the host page scroll.
+  try {
+    if (window.self !== window.top) document.documentElement.classList.add('is-embedded');
+  } catch (e) {
+    // Cross-origin access threw, which itself means we are framed.
+    document.documentElement.classList.add('is-embedded');
+  }
+</script>
 <title>ISPE Strategic Plan Progress Tracker</title>
 <style>
+  /* Source Serif 4 — self-hosted, SIL OFL 1.1 (see fonts/LICENSE.txt).
+     Variable weight 400-700 in a single file per subset. Declared with
+     unicode-range so the browser fetches latin-ext only if an accented
+     character actually appears; current plan content is pure ASCII, so only
+     the latin file (119 KB) is ever requested.
+     font-display:swap — headings paint immediately in the fallback serif and
+     reflow once loaded, rather than blocking first paint. */
+  @font-face {
+    font-family: 'Source Serif 4';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('fonts/source-serif-4-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Source Serif 4';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('fonts/source-serif-4-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+
   :root {
-    --not-started: #0f9ed4;
-    --on-track: #c6c611;
-    --delayed: #ffbf00;
-    --completed: #4da72d;
+    /* Status palette — validated for colorblind separation and 3:1 contrast on
+       white. Not Started is deliberately neutral: it is a null state, not a
+       category. Do not re-hue these without re-validating the adjacent pairs. */
+    --not-started: #64748b;
+    --on-track: #0284c7;
+    --delayed: #d97706;
+    --completed: #16a34a;
     --changed: #a02a93;
+
+    /* Badge tints — text steps meet 4.5:1 on their own tint. */
+    --not-started-ink: #475569; --not-started-tint: #f1f5f9;
+    --on-track-ink:    #075985; --on-track-tint:    #e0f2fe;
+    --delayed-ink:     #92400e; --delayed-tint:     #fef3c7;
+    --completed-ink:   #15803d; --completed-tint:   #dcfce7;
+
+    /* Progress magnitude is a single neutral hue — never the status hues, so
+       "70% done" can't be mistaken for "Completed". Slate rather than blue,
+       because blue is now On Track. 9.0:1 on white, so it doubles as the
+       score text colour. */
+    --progress: #334155;
+    --progress-track: #e9ecef;
+
+    /* Each OS's own UI face, in the right order — system-ui first so macOS
+       gets SF Pro rather than falling through Segoe UI. No webfont: this page
+       is opened over file:// as well as HTTP, and a CDN font would fail there
+       (and would put a third-party request in front of EU members). */
+    --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    /* Serif carries prose — the title, objective titles, goal descriptions.
+       Dense data (tables, badges, meta lines, chart text) stays sans, where
+       serifs measurably cost legibility at 0.65-0.85rem. */
+    --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
     --bg: #f4f6f9;
     --card-bg: #ffffff;
     --text: #2c3e50;
@@ -21,12 +87,60 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  /* Global size lift. Everything downstream is in rem, so raising the root
+     scales the whole page ~6% without touching individual rules. Headings then
+     get a steeper step on top of this — a uniform bump alone makes everything
+     bigger while leaving the hierarchy just as flat. */
+  html { font-size: 17px; }
+  @media (max-width: 640px) { html { font-size: 16px; } }
+
   body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-serif);
     background: var(--bg);
     color: var(--text);
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
+
+  /* Form controls don't inherit the page face by default. */
+  button, input, select, textarea { font-family: inherit; }
+
+  /* Tabular figures only where numbers stack into a vertical column and must
+     align — scores, stat rows, ring percentages. The donut's centre figure is
+     deliberately left proportional: it is a standalone hero number, not a
+     column, and proportional figures are better spaced at that size. */
+  .goal-score,
+  .ring-label,
+  .legend-count,
+  .obj-progress-label,
+  .summary-inline .stat .num { font-variant-numeric: tabular-nums; }
+
+  /* Source Serif 4 runs on the whole page. Two compensations follow from that:
+     its lowercase sits a touch smaller than the system sans at the same
+     nominal size, and serif strokes thin out fastest in the smallest labels —
+     so the sub-0.8rem tier is nudged up and given a little more line-height
+     and tracking to keep the counters open. */
+  /* Heading scale. The old ramp was compressed — the page title sat at 1.55rem
+     while goal text sat at 1.0rem, barely a 1.5x step, so nothing read as a
+     heading. These steps roughly follow a major-third ramp and give each level
+     a visible jump over the one below it. */
+  .header-text h1 { font-size: 2.05rem; font-weight: 700; letter-spacing: -0.015em; line-height: 1.15; }
+  .obj-title { font-size: 1.2rem; font-weight: 600; line-height: 1.35; }
+  .goal-desc { font-size: 1.06rem; font-weight: 600; line-height: 1.4; }
+  .section-heading { font-size: 1.4rem; }
+
+  .goal-meta,
+  .notes-text,
+  .notes-empty,
+  .tactics-table { font-size: 0.88rem; line-height: 1.45; }
+  .tactics-table th,
+  .summary-card .label,
+  .chart-card h3,
+  .filter-card h3 { font-size: 0.78rem; letter-spacing: 0.6px; }
+  .goal-meta { font-size: 0.78rem; }
+  .status-badge { font-size: 0.79rem; }
+  .tactic-id { font-size: 0.85rem; }
 
   /* Header */
   .header {
@@ -52,8 +166,15 @@
   .header-text p { font-size: 0.85rem; opacity: 0.8; }
   .goal.flash { animation: goalFlash 1.6s ease; }
   @keyframes goalFlash {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(255,191,0,0); }
-    20% { box-shadow: 0 0 0 4px rgba(255,191,0,0.6); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0); }
+    20% { box-shadow: 0 0 0 4px rgba(217,119,6,0.55); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
 
@@ -84,12 +205,15 @@
   .summary-card .count { font-size: 2rem; font-weight: 700; }
   .summary-card .label { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
   /* Inline summary stats inside the filter card */
+  /* One responsive row rather than two stretched columns. The old
+     `repeat(2, auto)` let each column expand to ~540px while its content was
+     only ~230px, which is where the card's dead space came from. auto-fit
+     reflows 6-across on desktop down to 2-across on a phone. */
   .summary-inline {
     display: grid;
-    grid-template-columns: repeat(2, auto);
-    gap: 10px 22px;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 12px 18px;
     align-content: start;
-    min-width: 240px;
   }
   .summary-inline .stat {
     display: flex;
@@ -115,7 +239,8 @@
     padding-top: 8px;
     margin-top: 2px;
     white-space: normal;
-    max-width: 460px;
+    /* No max-width: the note spans the full card so it lands in two lines
+       rather than stacking into a narrow three-line column. */
   }
   .summary-card.not-started .count { color: var(--not-started); }
   .summary-card.on-track .count { color: var(--on-track); }
@@ -159,11 +284,18 @@
   .legend-count { font-weight: 700; min-width: 24px; text-align: right; }
 
   /* Filters */
+  /* The six pills stretch to fill the row, so they line up with the six stat
+     columns below them instead of huddling at the left edge. */
   .filter-row {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     align-items: center;
+  }
+  .filter-row .filter-btn {
+    flex: 1 1 auto;
+    text-align: center;
+    white-space: nowrap;
   }
   .filter-btn {
     padding: 6px 14px;
@@ -178,10 +310,13 @@
   .filter-btn:hover { border-color: #aaa; }
   .filter-btn.active { color: white; }
   .filter-btn.active[data-status="all"] { background: var(--header-bg); border-color: var(--header-bg); }
-  .filter-btn.active[data-status="Not Started"] { background: var(--not-started); border-color: var(--not-started); }
-  .filter-btn.active[data-status="In Progress - On Track"] { background: var(--on-track); border-color: var(--on-track); color: #333; }
-  .filter-btn.active[data-status="In Progress - Delayed"] { background: var(--delayed); border-color: var(--delayed); color: #333; }
-  .filter-btn.active[data-status="Completed"] { background: var(--completed); border-color: var(--completed); }
+  /* Active pills use a darker step than the chart marks: white label text needs
+     4.5:1, while the marks themselves only need 3:1 as graphical objects. */
+  .filter-btn.active[data-status="Not Started"] { background: #64748b; border-color: #64748b; }
+  .filter-btn.active[data-status="In Progress - On Track"] { background: #036ba1; border-color: #036ba1; }
+  .filter-btn.active[data-status="In Progress - Delayed"] { background: #b45309; border-color: #b45309; }
+  .filter-btn.active[data-status="Completed"] { background: #15803d; border-color: #15803d; }
+  .filter-btn:focus-visible { outline: 2px solid var(--progress); outline-offset: 2px; }
   .filter-btn.active[data-status="Revised"] { background: var(--changed); border-color: var(--changed); }
 
   .search-box {
@@ -193,7 +328,7 @@
     outline: none;
     transition: border-color 0.2s;
   }
-  .search-box:focus { border-color: var(--not-started); }
+  .search-box:focus { border-color: var(--progress); }
 
   /* Objectives */
   .objective {
@@ -252,7 +387,9 @@
   .obj-ring .ring-label {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.72rem; font-weight: 700; color: var(--text);
+    /* Holds a fraction now ("4/13"), which is wider than the old "31%". */
+    font-size: 0.66rem; font-weight: 700; color: var(--text);
+    letter-spacing: -0.01em;
   }
   .obj-progress-wrap {
     display: flex;
@@ -319,7 +456,7 @@
   .goal-id {
     font-weight: 800;
     font-size: 1.05rem;
-    color: var(--not-started);
+    color: var(--header-bg);
     grid-row: 1 / span 2;
     align-self: center;
     min-width: 44px;
@@ -397,10 +534,23 @@
     font-weight: 600;
     white-space: nowrap;
   }
-  .status-badge.not-started { border-color: var(--not-started); color: var(--not-started); background-color: #e8f6fc; }
-  .status-badge.on-track { border-color: var(--on-track); color: #8a8a0e; background-color: #fdfde6; }
-  .status-badge.delayed { border-color: var(--delayed); color: #b38600; background-color: #fff8e1; }
-  .status-badge.completed { border-color: var(--completed); color: var(--completed); background-color: #ecf7e8; }
+  /* Each badge carries a glyph as well as a hue, so status survives greyscale
+     printing, colourblind vision, and forced-colors mode. */
+  .status-badge::before {
+    content: attr(data-glyph);
+    font-weight: 700;
+    margin-right: 6px;
+    font-size: 0.85em;
+  }
+  .status-badge.not-started { border-color: var(--not-started); color: var(--not-started-ink); background-color: var(--not-started-tint); }
+  .status-badge.on-track    { border-color: var(--on-track);    color: var(--on-track-ink);    background-color: var(--on-track-tint); }
+  .status-badge.delayed     { border-color: var(--delayed);     color: var(--delayed-ink);     background-color: var(--delayed-tint); }
+  .status-badge.completed   { border-color: var(--completed);   color: var(--completed-ink);   background-color: var(--completed-tint); }
+
+  @media (forced-colors: active) {
+    .status-badge { border: 2px solid CanvasText; color: CanvasText; background: Canvas; }
+    .legend-dot, .summary-inline .stat .dot { border: 1px solid CanvasText; }
+  }
 
   /* Notes read-only */
   .notes-text { font-size: 0.8rem; color: var(--text); line-height: 1.4; }
@@ -424,6 +574,43 @@
   }
   .toast.show { transform: translateY(0); opacity: 1; }
 
+  /* Content contact — sits between the last objective and the footer */
+  .content-contact {
+    text-align: center;
+    padding: 18px 16px;
+    margin-top: 20px;
+    font-size: 0.92rem;
+    color: var(--text-light);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .content-contact a {
+    color: var(--header-bg);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .content-contact a:hover,
+  .content-contact a:focus-visible { text-decoration: underline; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 22px 16px 34px;
+    margin-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-light);
+    font-size: 0.82rem;
+  }
+  .footer-copy { margin-bottom: 6px; }
+  .footer-credit a {
+    color: var(--text);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .footer-credit a:hover,
+  .footer-credit a:focus-visible { text-decoration: underline; }
+
   /* Hidden */
   .hidden { display: none !important; }
 
@@ -433,6 +620,20 @@
     .objective, .goal { break-inside: avoid; }
     .objective.open .objective-body { display: block; }
     .goal.open .goal-body { display: block; }
+  }
+
+  /* --- Embedded in an iframe (ISPE site) ---
+     Nothing pins. The whole document flows so the host page's own scrollbar
+     does the work, which reclaims all 335px of chrome inside the frame and
+     avoids a scroll region nested in a scroll region. Requires nothing from
+     the host page. The standalone view is unaffected. */
+  .is-embedded .header {
+    position: static;
+  }
+  .is-embedded .chart-filter-row {
+    position: static;
+    padding: 0;
+    z-index: auto;
   }
 
   /* Responsive */
@@ -555,8 +756,14 @@
   <div id="completedSection"></div>
 
   <!-- Objectives -->
-  <h2 style="font-size: 1.05rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--header-bg); margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--header-bg);">Strategic Plan Objectives and Goals</h2>
+  <h2 class="section-heading" style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--header-bg); margin: 28px 0 14px; padding-bottom: 10px; border-bottom: 2px solid var(--header-bg);">Strategic Plan Objectives and Goals</h2>
   <div id="objectivesContainer"></div>
+
+  <!-- Content contact: sits after the last objective, above the footer. -->
+  <div class="content-contact">
+    Questions about the content? Email
+    <a href="mailto:info@pharmacoepi.org">info@pharmacoepi.org</a>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -572,6 +779,38 @@ let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
 let currentFilter = 'all';
 let searchTerm = '';
 
+// ============ STATUS ENCODING ============
+// The dashboard owns its status palette rather than inheriting whatever hex
+// values happen to sit in data.json. The previous pair (#c6c611 On Track /
+// #ffbf00 Delayed) measured ΔE 0.8 under protanopia — indistinguishable — and
+// every value sat under 3:1 on white. These are validated: worst adjacent pair
+// ΔE 16.8 protan, all four ≥ 3:1. Re-validate before changing any of them.
+const STATUS_COLORS = {
+  'Not Started':            '#64748b',
+  'In Progress - On Track': '#0284c7',
+  'In Progress - Delayed':  '#d97706',
+  'Completed':              '#16a34a',
+};
+
+// Secondary encoding: green↔amber sits at ΔE 6.2 protan, which is only
+// acceptable alongside a non-colour channel. These glyphs are that channel.
+const STATUS_GLYPH = {
+  'Not Started':            '○',
+  'In Progress - On Track': '▶',
+  'In Progress - Delayed':  '!',
+  'Completed':              '✓',
+};
+
+// Ring/donut draw order. Deliberately NOT the semantic order: it keeps the
+// green Completed segment from ever touching the amber Delayed segment, which
+// is the one adjacency that fails colourblind separation.
+const STATUS_DRAW_ORDER = ['Completed', 'In Progress - On Track', 'In Progress - Delayed', 'Not Started'];
+
+function applyStatusPalette() {
+  data.status_colors = Object.assign({}, data.status_colors, STATUS_COLORS);
+  if (!data.changed_color) data.changed_color = '#a02a93';
+}
+
 // ============ INIT ============
 async function init() {
   try {
@@ -584,6 +823,7 @@ async function init() {
   } catch (e) {
     console.warn('Could not fetch data.json (likely opened via file://). Run `python3 -m http.server` from this folder to enable live data loading.', e);
   }
+  applyStatusPalette();
   if (data.metadata && data.metadata.as_of_date) {
     const el = document.getElementById('asOfDate');
     if (el) el.textContent = data.metadata.as_of_date;
@@ -607,9 +847,24 @@ async function init() {
   renderAll();
 }
 
+// The donut's centre figure is painted into a canvas, which — unlike the DOM —
+// gets no automatic reflow when a webfont arrives. If Source Serif 4 is still
+// in flight on first paint, the canvas silently bakes in the Georgia fallback
+// and keeps it. Redraw once the face is ready.
+let chartFontRedrawWired = false;
+function redrawChartOnFontLoad() {
+  if (chartFontRedrawWired || !document.fonts) return;
+  chartFontRedrawWired = true;
+  document.fonts.ready.then(() => {
+    chartHasAnimated = true;   // skip the reveal animation on the redraw
+    renderChart();
+  });
+}
+
 function renderAll() {
   renderSummary();
   renderChart();
+  redrawChartOnFontLoad();
   // At-risk panel is admin-only (see admin.html); intentionally not rendered here.
   renderChanges();
   renderCompleted();
@@ -636,10 +891,22 @@ function renderSummary() {
   const counts = getStatusCounts();
   const total = Object.values(counts).reduce((a,b) => a+b, 0);
   // Count revised/new across the same filtered scope used by getStatusCounts.
+  //
+  // Two things this has to get right:
+  //  1. "Revised / New" means revised OR new-in-plan. Two tactics (1.2.4,
+  //     1.2.5) carry both flags, so they are counted once, not twice.
+  //  2. Entries in `new_tactics` are free-text suggestions from the committee
+  //     survey and carry NO status field. They cannot belong to "Delayed" or
+  //     "Completed", so they must not be added when the view is narrowed to a
+  //     single status — that was inflating every filtered count by +2.
   let revisedCount = 0;
+  const statuslessCountable = !searchHits
+    && (currentFilter === 'all' || currentFilter === 'Revised');
   data.objectives.forEach(o => o.goals.forEach(g => {
-    g.tactics.forEach(t => { if (tacticVisible(t) && t.is_revised) revisedCount++; });
-    (g.new_tactics || []).forEach(() => { revisedCount++; });
+    g.tactics.forEach(t => {
+      if ((t.is_revised || t.is_new_in_plan) && tacticVisible(t)) revisedCount++;
+    });
+    if (statuslessCountable) revisedCount += (g.new_tactics || []).length;
   }));
   const stats = [
     { label: 'Total',       count: total,                              color: 'var(--header-bg)' },
@@ -650,9 +917,9 @@ function renderSummary() {
     { label: 'Revised / New', count: revisedCount,                     color: 'var(--changed)', overlay: true },
   ];
   const note = `<div class="summary-note">`
-    + `<span class="sn-star">*</span> Not Started + On Track + Delayed + Completed = Total (${total}). `
-    + `Revised / New is a separate tag: a revised tactic still has one of the four statuses above and is also counted here, `
-    + `plus any newly added tactics, so it is not part of the total.</div>`;
+    + `<span class="sn-star">*</span> The four statuses above sum to Total (${total}). `
+    + `Revised / New is a separate overlay tag: a revised tactic also carries one of those four statuses, `
+    + `and newly added tactics are counted here too, so it sits outside the total.</div>`;
   document.getElementById('summaryRow').innerHTML = stats.map(s =>
     `<div class="stat${s.overlay ? ' overlay' : ''}"><span class="dot" style="background:${s.color}"></span><span class="num">${s.count}</span><span class="lbl">${s.label}${s.overlay ? '<span class="sn-star">*</span>' : ''}</span></div>`
   ).join('') + note;
@@ -672,10 +939,15 @@ function getStatusCounts() {
 // ============ CHART ============
 let chartSlices = []; // {start, end, label, count, color, pct}
 let chartHasAnimated = false;
+const CHART_SIZE = 140;   // logical (CSS) px; the backing store is scaled by DPR
+const CHART_R = 60, CHART_INNER = 36;
+// Canvas takes a literal font string, not a CSS var — keep this in sync with
+// --font-serif in the stylesheet or the donut will drift from the page.
+const CANVAS_FONT_STACK = '"Source Serif 4", Georgia, "Times New Roman", serif';
 function renderChart() {
   const canvas = document.getElementById('statusChart');
   const counts = getStatusCounts();
-  const statuses = ['Not Started', 'In Progress - On Track', 'In Progress - Delayed', 'Completed'];
+  const statuses = STATUS_DRAW_ORDER;
   const colors = statuses.map(s => data.status_colors[s]);
   const values = statuses.map(s => counts[s] || 0);
   const total = values.reduce((a,b) => a+b, 0);
@@ -700,13 +972,28 @@ function renderChart() {
 
 function drawDonut(canvas, statuses, colors, values, total, progress) {
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const cx = canvas.width / 2, cy = canvas.height / 2, r = 60, inner = 36;
+  // Render at device resolution — a 140px canvas on a retina screen was being
+  // upscaled from a 140px backing store, which is what made the arcs look soft.
+  const dpr = window.devicePixelRatio || 1;
+  if (canvas.width !== CHART_SIZE * dpr) {
+    canvas.width = CHART_SIZE * dpr;
+    canvas.height = CHART_SIZE * dpr;
+    canvas.style.width = CHART_SIZE + 'px';
+    canvas.style.height = CHART_SIZE + 'px';
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, CHART_SIZE, CHART_SIZE);
+  const cx = CHART_SIZE / 2, cy = CHART_SIZE / 2, r = CHART_R, inner = CHART_INNER;
   // Counter-clockwise reveal: start at top (-PI/2) and sweep CCW.
   // We draw all slices in their final positions, but mask by a CCW reveal.
   const fullSweep = Math.PI * 2 * progress;
   let angle = -Math.PI / 2;
   chartSlices = [];
+
+  // 2px surface gap between adjacent fills, expressed as an angle at the outer
+  // radius. Skipped when a single status accounts for everything.
+  const present = values.filter(v => v > 0).length;
+  const gapAngle = present > 1 ? 2 / r : 0;
 
   values.forEach((v, i) => {
     if (v === 0) return;
@@ -715,9 +1002,11 @@ function drawDonut(canvas, statuses, colors, values, total, progress) {
     const revealStart = -Math.PI / 2 - fullSweep;
     const sliceStartCCW = -Math.PI / 2 - (angle + slice - (-Math.PI / 2));
     const sliceEndCCW = -Math.PI / 2 - (angle - (-Math.PI / 2));
+    // Inset both ends by half a gap, but never collapse a thin slice entirely.
+    const inset = Math.min(gapAngle / 2, Math.max(slice - 0.02, 0) / 2);
     // Intersect [sliceStartCCW, sliceEndCCW] with [revealStart, -PI/2]
-    const a0 = Math.max(sliceStartCCW, revealStart);
-    const a1 = Math.min(sliceEndCCW, -Math.PI / 2);
+    const a0 = Math.max(sliceStartCCW + inset, revealStart);
+    const a1 = Math.min(sliceEndCCW - inset, -Math.PI / 2);
     if (a1 > a0) {
       ctx.beginPath();
       ctx.arc(cx, cy, r, a0, a1);
@@ -734,15 +1023,16 @@ function drawDonut(canvas, statuses, colors, values, total, progress) {
     angle += slice;
   });
 
-  // Center text
+  // Center text — the headline number reads as the hero figure, so it gets the
+  // primary ink weight and the unit label recedes.
   ctx.fillStyle = '#2c3e50';
-  ctx.font = 'bold 18px Segoe UI, system-ui';
+  ctx.font = '700 20px ' + CANVAS_FONT_STACK;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(total, cx, cy - 6);
-  ctx.font = '9px Segoe UI, system-ui';
+  ctx.fillText(total, cx, cy - 7);
+  ctx.font = '600 9px ' + CANVAS_FONT_STACK;
   ctx.fillStyle = '#6b7c93';
-  ctx.fillText('efforts', cx, cy + 12);
+  ctx.fillText('EFFORTS', cx, cy + 12);
 }
 
 function wireChartHover(canvas) {
@@ -755,14 +1045,15 @@ function wireChartHover(canvas) {
     tip.style.cssText = 'position:fixed;pointer-events:none;background:#1a2a3a;color:white;font-size:0.78rem;padding:6px 10px;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:none;z-index:500;white-space:nowrap;';
     document.body.appendChild(tip);
     canvas.addEventListener('mousemove', (e) => {
+      // Work in logical chart units, not the DPR-scaled backing store.
       const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const mx = (e.clientX - rect.left) * scaleX;
-      const my = (e.clientY - rect.top) * scaleY;
-      const dx = mx - canvas.width/2, dy = my - canvas.height/2;
+      if (!rect.width || !rect.height) return;
+      const mx = (e.clientX - rect.left) * (CHART_SIZE / rect.width);
+      const my = (e.clientY - rect.top) * (CHART_SIZE / rect.height);
+      const dx = mx - CHART_SIZE/2, dy = my - CHART_SIZE/2;
       const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < 36 || dist > 60) { tip.style.display = 'none'; canvas.style.cursor = 'default'; return; }
+      // Slightly forgiving band — the hit target should exceed the mark.
+      if (dist < CHART_INNER - 4 || dist > CHART_R + 4) { tip.style.display = 'none'; canvas.style.cursor = 'default'; return; }
       let a = Math.atan2(dy, dx);
       // Normalize so slice ranges (which start at -PI/2) are findable.
       const hit = chartSlices.find(s => {
@@ -840,7 +1131,15 @@ function renderChanges() {
     return;
   }
   const changedColor = data.changed_color || '#a02a93';
-  const total = revised.length + added.length;
+  // Distinct changed items, not revised.length + added.length. Tactics 1.2.4
+  // and 1.2.5 carry both is_revised and is_new_in_plan, so they appear in both
+  // lists below (correctly — they are both) but must only be counted once in
+  // the badge, which otherwise reported 18 changes for 16 changed items.
+  let total = 0;
+  data.objectives.forEach(o => o.goals.forEach(g => {
+    g.tactics.forEach(t => { if (t.is_revised || t.is_new_in_plan) total++; });
+    total += (g.new_tactics || []).length;
+  }));
 
   const revisedItems = revised.map(r => `
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
@@ -876,7 +1175,7 @@ function renderChanges() {
     : listBody;
 
   container.innerHTML = `
-    <div class="hover-lift" style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border-left:4px solid ${changedColor};overflow:hidden;margin-bottom:24px;">
+    <div class="hover-lift" style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid var(--border);overflow:hidden;margin-bottom:24px;">
       <div style="display:flex;align-items:center;gap:12px;padding:14px 22px;user-select:none;flex-wrap:wrap;">
         <span id="changes-chev" onclick="toggleChangesAll()" style="display:inline-block;transition:transform 0.2s;color:${changedColor};font-size:0.8rem;cursor:pointer;${changesOpen?'transform:rotate(90deg);':''}">&#9654;</span>
         <div onclick="toggleChangesAll()" style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${changedColor};cursor:pointer;flex:1;">Changes &amp; New Tactics</div>
@@ -897,7 +1196,11 @@ let completedOpen = false;
 function renderCompleted() {
   const container = document.getElementById('completedSection');
   if (!container) return;
-  const doneColor = (data.status_colors && data.status_colors['Completed']) || '#4da72d';
+  // Two steps, deliberately: the mark green is a graphical colour (3:1), but
+  // this block also puts small text in green on white and white text on green,
+  // both of which need 4.5:1. doneInk is the darker step that clears it.
+  const doneColor = (data.status_colors && data.status_colors['Completed']) || '#16a34a';
+  const doneInk = '#15803d';
   const groups = [];
   let total = 0;
   data.objectives.forEach(o => {
@@ -912,25 +1215,25 @@ function renderCompleted() {
   });
   if (total === 0) { container.innerHTML = ''; return; }
   const subhead = (label, count) => `
-    <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${doneColor};margin:14px 0 4px;display:flex;align-items:center;gap:8px;">
+    <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${doneInk};margin:14px 0 4px;display:flex;align-items:center;gap:8px;">
       ${label}
-      <span style="background:${doneColor};color:white;font-size:0.65rem;padding:1px 7px;border-radius:9px;">${count}</span>
+      <span style="background:${doneInk};color:white;font-size:0.65rem;padding:1px 7px;border-radius:9px;">${count}</span>
     </div>`;
   const groupsHtml = groups.map(({o, items}) =>
     subhead('Objective ' + o.objective_number, items.length) +
     items.map(({t, g}) => `
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
-        <div style="font-weight:600;color:${doneColor};margin-bottom:4px;">Tactic ${t.tactic_id} <span style="color:var(--text-light);font-weight:500;">(Goal ${g.goal_id})</span></div>
+        <div style="font-weight:600;color:${doneInk};margin-bottom:4px;">Tactic ${t.tactic_id} <span style="color:var(--text-light);font-weight:500;">(Goal ${g.goal_id})</span></div>
         <div style="color:var(--text);">${t.description}</div>
         ${g.responsible_committee ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">Owner: <strong>${g.responsible_committee}</strong></div>` : ''}
       </div>`).join('')
   ).join('');
   container.innerHTML = `
-    <div class="hover-lift" style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border-left:4px solid ${doneColor};overflow:hidden;margin-bottom:24px;">
+    <div class="hover-lift" style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid var(--border);overflow:hidden;margin-bottom:24px;">
       <div onclick="toggleCompletedAll()" style="display:flex;align-items:center;gap:12px;padding:14px 22px;user-select:none;flex-wrap:wrap;cursor:pointer;">
-        <span id="completed-chev" style="display:inline-block;transition:transform 0.2s;color:${doneColor};font-size:0.8rem;${completedOpen?'transform:rotate(90deg);':''}">&#9654;</span>
-        <div style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${doneColor};flex:1;">Completed Tactics</div>
-        <div style="background:${doneColor};color:white;font-size:0.7rem;font-weight:700;padding:2px 9px;border-radius:10px;">${total}</div>
+        <span id="completed-chev" style="display:inline-block;transition:transform 0.2s;color:${doneInk};font-size:0.8rem;${completedOpen?'transform:rotate(90deg);':''}">&#9654;</span>
+        <div style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${doneInk};flex:1;">Completed Tactics</div>
+        <div style="background:${doneInk};color:white;font-size:0.7rem;font-weight:700;padding:2px 9px;border-radius:10px;">${total}</div>
       </div>
       <div id="completed-body" style="display:${completedOpen?'block':'none'};padding:0 22px 16px 22px;border-top:1px solid #f0f2f5;">
         ${groupsHtml}
@@ -980,7 +1283,9 @@ function renderChangesTimeline(revised, added, changedColor) {
   const groupKeys = Object.keys(groups);
   if (groupKeys.length === 0) return '<div style="text-align:center;color:var(--text-light);padding:20px;">No changes recorded.</div>';
 
-  let html = `<div style="background:#fff;border-radius:10px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border-left:4px solid ${changedColor};">`;
+  // No accent border here: this panel is nested inside the already-bordered
+  // Changes card, and its own timeline rail + dots already carry the colour.
+  let html = `<div style="background:#fff;border-radius:10px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid var(--border);">`;
   html += `<div style="position:relative;padding-left:24px;">`;
   // Vertical line
   html += `<div style="position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:#e1e8ef;"></div>`;
@@ -999,7 +1304,7 @@ function renderChangesTimeline(revised, added, changedColor) {
         </div>`;
       } else {
         html += `<div style="font-size:0.83rem;padding:8px 0;border-bottom:1px solid #f0f2f5;">
-          <span style="background:#4da72d;color:white;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px;">NEW</span>
+          <span style="background:#15803d;color:white;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px;">NEW</span>
           <strong>Goal ${it.goal_id}</strong> — new tactic
           <div style="margin-top:3px;">${it.description}</div>
           ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Submitted by: <strong>${it.by}</strong></div>` : ''}
@@ -1023,7 +1328,7 @@ function toggleChangesCard(id) {
 
 // ============ OBJECTIVES ============
 function objectiveRingSVG(obj) {
-  const statuses = ['Not Started','In Progress - On Track','In Progress - Delayed','Completed'];
+  const statuses = STATUS_DRAW_ORDER;
   const counts = {};
   obj.goals.forEach(g => g.tactics.forEach(t => { counts[t.status] = (counts[t.status]||0)+1; }));
   const total = statuses.reduce((s, k) => s + (counts[k]||0), 0);
@@ -1031,21 +1336,27 @@ function objectiveRingSVG(obj) {
   const pct = total ? Math.round((completed/total)*100) : 0;
   if (total === 0) return `<div class="ring-label">—</div>`;
   const r = 22, c = 2 * Math.PI * r;
+  // A 2px surface gap between segments so adjacent fills never bleed together.
+  // Only applied when more than one status is present — a single full segment
+  // must stay a closed ring rather than lose a notch for no reason.
+  const present = statuses.filter(s => (counts[s] || 0) > 0).length;
+  const GAP = present > 1 ? 2 : 0;
   let offset = 0;
   const segs = statuses.map(s => {
     const v = counts[s] || 0;
     if (!v) return '';
     const len = (v/total) * c;
+    const drawn = Math.max(len - GAP, 0.5);
     const seg = `<circle r="${r}" cx="28" cy="28" fill="none"
       stroke="${data.status_colors[s]}" stroke-width="8"
-      stroke-dasharray="${len} ${c-len}" stroke-dashoffset="${-offset}" />`;
+      stroke-dasharray="${drawn} ${c-drawn}" stroke-dashoffset="${-offset}" />`;
     offset += len;
     return seg;
   }).join('');
-  return `<svg viewBox="0 0 56 56">
+  return `<svg viewBox="0 0 56 56" role="img" aria-label="${completed} of ${total} tactics completed, ${pct} percent">
     <circle r="${r}" cx="28" cy="28" fill="none" stroke="#eef1f5" stroke-width="8"/>
     ${segs}
-  </svg><div class="ring-label">${pct}%</div>`;
+  </svg><div class="ring-label">${completed}/${total}</div>`;
 }
 
 function renderObjectives() {
@@ -1053,9 +1364,6 @@ function renderObjectives() {
   container.innerHTML = data.objectives.map((obj, oi) => {
     const completedCount = countStatus(obj, 'Completed');
     const totalCount = countAllTactics(obj);
-    const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-    const progressColor = pct >= 70 ? 'var(--completed)' : pct >= 40 ? 'var(--on-track)' : pct > 0 ? 'var(--delayed)' : 'var(--not-started)';
-    const pills = getMiniPills(obj);
     const hasVisible = objectiveHasVisibleTactics(obj);
 
     return `
@@ -1064,7 +1372,7 @@ function renderObjectives() {
         <span class="obj-chevron">&#9654;</span>
         <div class="obj-number">${obj.objective_number}</div>
         <div class="obj-title">${obj.description}</div>
-        <div class="obj-ring" title="${completedCount} of ${totalCount} tactics completed">
+        <div class="obj-ring" title="${completedCount} of ${totalCount} tactics completed across this objective's goals (${totalCount ? Math.round((completedCount/totalCount)*100) : 0}%)">
           ${objectiveRingSVG(obj)}
         </div>
       </div>
@@ -1075,18 +1383,30 @@ function renderObjectives() {
   }).join('');
 }
 
+// Progress is a plain count of completed tactics over the goal's own tactic
+// total — 2/7, not 3/10. The previous version rescaled the percentage onto a
+// fixed 0-10 axis and rounded it, which invented numerators that matched no
+// actual tactic (2 of 7 became "3/10"). The stored `progress_score` /
+// `progress_max` fields in data.json are deliberately not used here; this
+// figure is derived from tactic statuses so it always reconciles with the
+// rows underneath it.
 function computeGoalProgress(goal) {
-  const max = goal.progress_max || 10;
-  if (!goal.tactics || goal.tactics.length === 0) return { score: 0, max, pct: 0 };
+  if (!goal.tactics || goal.tactics.length === 0) return { score: 0, max: 0, pct: 0 };
   const completed = goal.tactics.filter(t => t.status === 'Completed').length;
-  const pct = (completed / goal.tactics.length) * 100;
-  const score = Math.round((pct / 100) * max);
-  return { score, max, pct };
+  const total = goal.tactics.length;
+  return { score: completed, max: total, pct: (completed / total) * 100 };
 }
 
 function renderGoal(goal, oi, gi) {
   const { score, max, pct } = computeGoalProgress(goal);
-  const progressColor = pct >= 70 ? 'var(--completed)' : pct >= 40 ? 'var(--on-track)' : pct > 0 ? 'var(--delayed)' : '#b0b8c1';
+  // Magnitude, not state. Previously this mapped percentage bands onto the
+  // status hues, so a goal at 72% was painted the same green as "Completed"
+  // and a goal at 20% the same amber as "Delayed" — two meanings, one colour.
+  // Progress now uses a single neutral hue; status keeps the palette to itself.
+  const progressColor = pct > 0 ? 'var(--progress)' : 'var(--progress-track)';
+  // The score is text and must stay legible at 0% — it cannot inherit the
+  // track colour, which is a 1.1:1 whisper on white.
+  const scoreColor = pct > 0 ? 'var(--progress)' : 'var(--text-light)';
   const hasVisible = goalHasVisibleTactics(goal);
 
   return `
@@ -1117,8 +1437,8 @@ function renderGoal(goal, oi, gi) {
       </table>
       <div style="padding: 12px 16px; border-top: 1px solid var(--border); background: #f4f6f9; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
         <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--header-bg);">Goal Progress</span>
-        <span style="font-size: 1.1rem; font-weight: 800; color: ${progressColor};">${score}/${max}</span>
-        <span style="font-size: 0.75rem; color: var(--text-light);">— auto-calculated from completed tactics (${goal.tactics.filter(t => t.status==='Completed').length} of ${goal.tactics.length} complete)</span>
+        <span style="font-size: 1.1rem; font-weight: 800; font-variant-numeric: tabular-nums; color: ${scoreColor};">${score}/${max}</span>
+        <span style="font-size: 0.78rem; color: var(--text-light);">tactics completed${max ? ` &middot; ${Math.round(pct)}%` : ''}</span>
       </div>
     </div>
   </div>`;
@@ -1131,7 +1451,7 @@ function statusBadgeHTML(status) {
     'In Progress - Delayed': 'delayed',
     'Completed': 'completed',
   }[status] || 'not-started';
-  return `<span class="status-badge ${cls}">${status}</span>`;
+  return `<span class="status-badge ${cls}" data-glyph="${STATUS_GLYPH[status] || '○'}">${status}</span>`;
 }
 
 function renderTactic(t) {
@@ -1140,7 +1460,7 @@ function renderTactic(t) {
     ? ` <span style="display:inline-block;background:${data.changed_color||'#a02a93'};color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="Revised — see Changes section above">REV</span>`
     : '';
   const newBadge = t.is_new_in_plan
-    ? ` <span style="display:inline-block;background:#4da72d;color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="New tactic">NEW</span>`
+    ? ` <span style="display:inline-block;background:#15803d;color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="New tactic">NEW</span>`
     : '';
   const notesHTML = t.notes
     ? `<span class="notes-text">${t.notes}</span>`
@@ -1179,7 +1499,9 @@ function buildSearchIndex() {
 
 function tacticVisible(t) {
   const statusMatch = currentFilter === 'all'
-    || (currentFilter === 'Revised' && t.is_revised)
+    // The pill is labelled "Revised / New", so it must match both flags.
+    // Matching only is_revised hid the tactics that are new-but-not-revised.
+    || (currentFilter === 'Revised' && (t.is_revised || t.is_new_in_plan))
     || t.status === currentFilter;
   const searchMatch = !searchHits || searchHits.has(t.tactic_id);
   return statusMatch && searchMatch;
@@ -1256,9 +1578,11 @@ function getMiniPills(obj) {
 init();
 </script>
 
-<footer style="text-align:center;padding:24px 16px 32px;color:#6b7c93;font-size:0.8rem;border-top:1px solid #e1e8ef;margin-top:24px;">
-  <div style="margin-bottom:8px;">Questions about the content? Email <a href="mailto:info@pharmacoepi.org" style="color:#1a2a3a;font-weight:700;text-decoration:none;">info@pharmacoepi.org</a></div>
-  Created by John D. Diaz-Decaro, PhD, MS · <a href="https://blackswancausallabs.com/" target="_blank" rel="noopener" style="color:#000;text-decoration:none;font-weight:700;">Black Swan Causal Labs, LLC</a>
+<footer>
+  <div class="footer-copy">&copy; 2026 International Society for Pharmacoepidemiology. All rights reserved.</div>
+  <div class="footer-credit">Dashboard designed and built by
+    <a href="https://blackswancausallabs.com/" target="_blank" rel="noopener">Black Swan Causal Labs, LLC</a>
+  </div>
 </footer>
 
 </body>
