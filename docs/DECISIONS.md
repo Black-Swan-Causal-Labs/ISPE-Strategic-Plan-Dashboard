@@ -65,3 +65,100 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
 ## Mobile
 - Responsive CSS extended (stack search/summary, wrap at-risk rows, reflow summary note, tighten collapsible
   padding). **Not yet verified at true phone width** — the dev environment couldn't screenshot below ~500px.
+
+---
+
+# 2026-07-26 — Visual & correctness overhaul
+
+## Status palette rebuilt (accessibility)
+- The old palette was **measurably broken**, not merely dated. On Track `#c6c611` vs Delayed `#ffbf00`
+  measured **ΔE 0.8 under protanopia** — indistinguishable — and **8.6 for normal vision**, below the
+  ΔE 15 floor. All four colours sat **under 3:1 contrast** on white.
+- Root cause was semantic: *On Track* was painted caution-yellow when it means **good**, which is why it
+  collided with *Delayed*. New mapping is the conventional one:
+
+  | Status | Was | Now | Meaning |
+  |---|---|---|---|
+  | Not Started | `#0f9ed4` blue | `#64748b` slate | null state, deliberately neutral |
+  | On Track | `#c6c611` olive | `#0284c7` blue | in progress, healthy |
+  | Delayed | `#ffbf00` amber | `#d97706` amber | at risk |
+  | Completed | `#4da72d` green | `#16a34a` green | done |
+
+- Validated: worst adjacent pair now **ΔE 16.8 protan**, all four **≥ 3:1**. Green↔amber sits at ΔE 6.2,
+  which is only permissible **with a non-colour channel** — hence the glyphs below.
+- **Do not re-hue these without re-running a CVD validator.** The ordering is a safety mechanism, not taste.
+- **Secondary encoding added:** every status badge carries a glyph (`○` `▶` `!` `✓`), so status survives
+  greyscale printing, colourblind vision, and `forced-colors` mode.
+- **Ring/donut draw order is deliberately non-semantic** — `Completed, On Track, Delayed, Not Started` —
+  because it keeps the green and amber segments from ever touching, the one adjacency that fails CVD.
+- Text vs marks are separated: filter pills and small white-on-colour badges use **darker steps**
+  (`#036ba1`, `#b45309`, `#15803d`) because text needs 4.5:1 while graphical marks need only 3:1.
+
+## Progress is a count, not a rescaled percentage
+- Goal progress previously showed `x/10` derived from `round(pct/100 * 10)`. Goal 3.1 (2 of 7 complete)
+  displayed **"3/10"** — a numerator matching no actual tactic. Now shows **`2/7`** plus the percentage.
+- Objective rings likewise show the composite fraction (objective 3 = **4/13**). The underlying ring
+  percentage was already computed this way; only the label changed.
+- **The stored `progress_score` / `progress_max` fields in `data.json` are deliberately unused.** All 17
+  goals' stored scores disagree with the computed values (some wildly: goal 2.2 stored 6, computes 0).
+  Progress is derived from tactic statuses so it always reconciles with the rows beneath it. Revisit only
+  if committees' self-reported judgement should override the tactic counts — a governance decision.
+- Progress bars use a single neutral slate (`--progress`), never the status hues. Previously percentage
+  bands mapped onto status colours, so a goal at 72% was painted the same green as "Completed".
+
+## Revised / New counting — three bugs fixed
+- **Statusless suggestions leaked into every filter.** Entries in `new_tactics` are free-text survey
+  submissions with **no `status` field**; they were counted unconditionally, inflating every filtered view
+  by +2. Filtering to Delayed showed 2 when the true answer is **0**.
+- **`is_new_in_plan` was ignored** by the summary, which counted only `is_revised` — dropping 5 tactics.
+- **The Changes badge double-counted.** Tactics **1.2.4 and 1.2.5 carry both flags**, so
+  `revised.length + added.length` counted them twice: 18 reported for **16** actual changed items.
+- Net: the summary said 13 and the Changes card said 18, they disagreed, and neither was right. Both now
+  report **16**. The four statuses sum exactly to Total in every view.
+- The "Revised / New" filter pill also matched only `is_revised`, hiding new-but-not-revised tactics from a
+  filter whose label promised them. Now matches both flags.
+
+## Typography
+- **Source Serif 4, self-hosted** (SIL OFL 1.1, `fonts/`), for the whole page. Chosen over a system stack
+  because *any* system stack resolves to the face already in use — `system-ui` is SF Pro on macOS, so a
+  reorder alone changes nothing visible. A visible change requires a real webfont.
+- **Self-hosted, not CDN,** for two reasons: the page is opened over `file://` as well as HTTP (a CDN font
+  fails there), and a third-party font request on behalf of EU members is a GDPR liability.
+- `unicode-range` splits latin / latin-ext, so the 98 KB extended file is **never fetched** for current
+  ASCII-only content but covers accented names automatically if they appear. 119 KB transfers.
+- Root size lifted to **17px** (16px on mobile) and the heading ramp widened from a compressed 1.55/1.0 to
+  **2.05 / 1.4 / 1.2 / 1.06**. A uniform bump alone would have scaled the flatness too.
+- The canvas donut needs a **font-load redraw** — canvas gets no reflow when a webfont arrives, so it would
+  otherwise permanently bake in the Georgia fallback.
+
+## Embedded (iframe) layout
+- `index.html` detects framing (`window.self !== window.top`, set inline in `<head>` before the stylesheet)
+  and **drops `position: sticky`** on the header and filter row.
+- Reason: inside an iframe, sticky pins to the **iframe's** viewport. The header + filter row are ~335px of
+  permanently-frozen chrome. At the documented 1400px embed that is 24%; at a 600px embed it is **56%**,
+  leaving room for roughly three objective rows. Unstuck, the chrome scrolls away and the host page's own
+  scrollbar does the work.
+- True iframe auto-height needs `postMessage` and a script on the ISPE page — **not** done, since it
+  requires cooperation from the ISPE side.
+
+## Save / Publish are now git operations
+- Added **`admin-server.py`**: a local server exposing `/api/save` (write `data.json` + commit) and
+  `/api/publish` (+ push). Bound to `127.0.0.1` only — it can commit to the repository.
+- **Why local rather than the GitHub API:** `admin.html` is publicly reachable, so any embedded token would
+  be world-readable. A runtime-entered token in `localStorage` is also unsafe here while survey free-text is
+  still interpolated into `innerHTML` unescaped.
+- `admin.html` **degrades gracefully** — with no helper it falls back to the previous download behaviour, so
+  the public copy is unaffected.
+- The server writes with the **exact formatting `csv_to_dashboard_json.py` uses** (`indent=2`, default
+  `ensure_ascii`, trailing newline) and skips the write entirely when the parsed content is unchanged.
+  Without both, formatting drift alone produced empty commits.
+
+## Other
+- **Side-tab accent borders removed** (4px coloured left slabs on the Changes / Completed / at-risk cards)
+  in favour of hairline borders — the headers already carried the colour three ways.
+- Footer now carries a **2026 copyright** and credits Black Swan Causal Labs for the dashboard; the personal
+  byline was removed at the author's request. **The copyright holder is an assumption** (ISPE, as content
+  owner) — confirm before this is treated as a legal notice.
+- The contact line moved out of the footer to sit under the last objective.
+- Design-detector waivers live in `.impeccable/config.json` (not tracked — the allowlist excludes it), each
+  with a recorded reason.
