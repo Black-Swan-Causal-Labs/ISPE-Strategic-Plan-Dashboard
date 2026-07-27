@@ -144,6 +144,13 @@ Paste into a "Custom HTML" block. GitHub Pages allows external iframing.
   structural plan change (add/remove a tactic, reset flags) must be made in both, and reflected in `data.json`.
   The script only reads/writes via `index.html` + `data.json`.
 
+## Importing a data.json into admin (hardened 2026-07-27)
+"Import JSON" replaces the **entire** dataset. It now: validates the file's shape before touching anything,
+shows a confirmation naming the incoming vs. current counts, keeps a rollback copy in case rendering fails,
+and only persists (and resets the change-log baseline) after the data has proven it renders. A malformed
+file is rejected with a specific reason and **nothing is changed**. The browser-side check is kept in step
+with `validate_payload()` in `admin-server.py` — loosen one, loosen the other.
+
 ## Updating the data (current best-understanding workflow)
 1. Get the new Alchemer CSV (keep it out of git — it has PII).
 2. Run `python3 csv_to_dashboard_json.py` (it reads `index.html`'s `DEFAULT_DATA` + the CSV → writes `data.json`).
