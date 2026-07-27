@@ -1,6 +1,31 @@
 # ISPE Strategic Plan Dashboard — Status / Handoff
 
-_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-07-26._
+_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-07-27._
+
+## Start here (cold start)
+
+```bash
+# Look at it / edit it. The helper is what makes Save and Publish real git actions.
+python3 admin-server.py          # → http://127.0.0.1:8800/admin.html  (editor)
+                                 # → http://127.0.0.1:8800/index.html  (public view)
+
+# Just viewing, no editing:
+python3 -m http.server 8000      # → http://localhost:8000/index.html
+```
+
+**Both branches are in sync and pushed as of 2026-07-27.** Nothing is half-finished in the repo.
+
+| | state |
+|---|---|
+| `main` | current — all work through 2026-07-27 |
+| `public-deploy` | current — synced from `main`, `admin.html` correctly absent |
+| BSCL Pages | serving **`main`** (so `admin.html` is publicly reachable — see Live URLs) |
+| ISPE fork | **does not exist yet** (404 as of 2026-07-27) |
+
+**Three things are waiting on a human, not on code** — see the sections below for detail:
+1. Flip BSCL Pages to serve `public-deploy` (one dropdown; un-publishes `admin.html`).
+2. Confirm the footer copyright holder — it currently names ISPE, which was an assumption.
+3. Decide how ISPE will get updates (fork + sync, vs. iframe BSCL directly, vs. push access).
 
 ## What this is
 A static, client-side dashboard tracking progress on the ISPE Strategic Plan (2024–2029).
@@ -18,16 +43,34 @@ ISPE website as an `<iframe>`. No backend — everything runs in the browser.
   - `fonts/` — self-hosted Source Serif 4 (woff2 + SIL OFL licence)
   - `docs/` — this documentation
   - `.gitignore` — allowlist (only tracks the files above + images); **the raw survey CSV is intentionally NOT tracked (it contains names/emails/IPs)**
-- **`public-deploy`** — the deploy branch: **public dashboard only** (`index.html`, `data.json`, images, `README.md`). `admin.html` and the script are deliberately excluded so they can never be published to the public site. This is the branch GitHub Pages should serve.
+- **`public-deploy`** — the deploy branch: **public dashboard only** (`index.html`, `data.json`, `fonts/`,
+  images, `README.md`). `admin.html`, `admin-server.py`, and the CSV script are deliberately excluded so they
+  can never be published to the public site. This is the branch GitHub Pages *should* serve.
+  - It has its **own separate allowlist `.gitignore`** — different from `main`'s. Anything new that
+    `index.html` depends on must be allowlisted there too, or it silently won't ship. `fonts/` was added
+    on 2026-07-27 for exactly this reason.
+  - The branch is maintained by **copying `index.html` from `main`**, not by merging. As of 2026-07-27 the
+    two are in sync.
 
-## Live URLs
-- **Black Swan (current):**
-  - Public: https://black-swan-causal-labs.github.io/ISPE-Strategic-Plan-Dashboard/
-  - Admin: https://black-swan-causal-labs.github.io/ISPE-Strategic-Plan-Dashboard/admin.html
-  - (BSCL Pages serves `main`, so both files are live there.)
-- **ISPE (planned):** ISPE forks the repo into **`github.com/ispe-sp`** (a personal user account, works fine), enables Pages on the **`public-deploy`** branch, giving:
-  - https://ispe-sp.github.io/ISPE-Strategic-Plan-Dashboard/  ← the iframe `src`
-  - When forking, **uncheck "Copy the main branch only"** so `public-deploy` is included.
+## Live URLs & deployment state (verified 2026-07-27)
+- **Black Swan (live now):** https://black-swan-causal-labs.github.io/ISPE-Strategic-Plan-Dashboard/
+  - **BSCL Pages is configured to serve `main`, not `public-deploy`.** That is why
+    `.../admin.html` is publicly reachable. It contradicts the intent recorded in this file.
+  - **Pending, one-click, no code change:** switch the Pages source branch to `public-deploy` in repo
+    Settings → Pages. That un-publishes `admin.html` immediately. `public-deploy` is current, so there is
+    no downside to flipping it. *(Left to the owner — it is a GitHub settings change.)*
+- **ISPE (not yet created):** `github.com/ispe-sp/ISPE-Strategic-Plan-Dashboard` returned **404** as of
+  2026-07-27 — **ISPE has not forked yet.** Nothing downstream is stale; there is a clean window to get
+  `public-deploy` right before they fork, which is already done.
+  - When they fork: **uncheck "Copy the main branch only"** or `public-deploy` won't come across and
+    there will be nothing to point Pages at.
+  - They then enable Pages on `public-deploy`, giving
+    https://ispe-sp.github.io/ISPE-Strategic-Plan-Dashboard/ ← the iframe `src`.
+- **⚠️ Forks do not auto-update.** Every `data.json` refresh needs someone at ISPE to click **"Sync fork."**
+  That puts the party least able to act quickly on the critical path, and the failure mode is a public
+  dashboard quietly showing last quarter's numbers. Two ways out, both easier to arrange *before* they fork:
+  (a) ISPE iframes the BSCL Pages URL directly — no fork, no sync, updates land on push; or
+  (b) ISPE forks but grants push access, so BSCL syncs it. Not yet raised with them.
 
 ## Embed
 ```html

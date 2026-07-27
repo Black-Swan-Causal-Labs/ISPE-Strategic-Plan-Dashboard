@@ -153,6 +153,26 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
   `ensure_ascii`, trailing newline) and skips the write entirely when the parsed content is unchanged.
   Without both, formatting drift alone produced empty commits.
 
+## Branch & deployment (2026-07-27)
+- **`public-deploy` is maintained by copying `index.html` from `main`, not by merging.** Verified before
+  updating it: `public-deploy`'s `index.html` was **byte-identical** (SHA-256) to `main`'s pre-session
+  version, and its five "divergent" commits were all manual sync commits plus a README tweak. So this is a
+  clean overwrite, not a merge — and merging would risk dragging `admin.html` onto the branch that exists
+  specifically to exclude it.
+- **`public-deploy` has its own separate allowlist `.gitignore`.** `fonts/` had to be allowlisted there
+  independently; without it the font files are untrackable on that branch and the live ISPE-facing site
+  silently falls back to Georgia. **Any future file `index.html` depends on must be added to both
+  allowlists.**
+- **BSCL Pages serves `main`, which is why `admin.html` is publicly reachable.** The documented intent was
+  always `public-deploy`. Switching the Pages source branch un-publishes admin with no code change; left to
+  the owner as a settings decision. Not a substitute for real auth — GitHub Pages on a public repo has none.
+- **ISPE had not forked as of 2026-07-27** (`ispe-sp/...` → 404), so `public-deploy` was brought current
+  *before* any fork exists. That is the cheap ordering; fixing it after a fork means asking ISPE to re-sync.
+- **Fork sync is a standing dependency on ISPE.** GitHub forks do not auto-update; someone there must click
+  "Sync fork" for every `data.json` refresh. Given how slow that channel has been, two alternatives were
+  raised and are **still undecided**: ISPE iframes the BSCL Pages URL directly (removes them from the
+  critical path entirely), or ISPE grants push access so BSCL syncs the fork itself.
+
 ## Other
 - **Side-tab accent borders removed** (4px coloured left slabs on the Changes / Completed / at-risk cards)
   in favour of hairline borders — the headers already carried the colour three ways.
