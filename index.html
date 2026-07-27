@@ -777,6 +777,19 @@ const DEFAULT_DATA = {"metadata":{"title":"ISPE Strategic Plan Progress Tracker"
 
 let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
 let currentFilter = 'all';
+
+// ============ HTML ESCAPING ============
+// Survey free-text (descriptions, notes, submitter names) reaches these pages
+// from respondent input via csv_to_dashboard_json.py, and is rendered with
+// innerHTML. Without escaping, a crafted survey answer executes as markup.
+// Handles attribute contexts too, hence the quote entities.
+function esc(v) {
+  if (v === null || v === undefined) return '';
+  return String(v).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
 let searchTerm = '';
 
 // ============ STATUS ENCODING ============
@@ -1143,19 +1156,19 @@ function renderChanges() {
 
   const revisedItems = revised.map(r => `
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
-        <div style="font-weight:600;color:${changedColor};margin-bottom:4px;">Tactic ${r.tactic_id} <span style="color:var(--text-light);font-weight:500;">(Goal ${r.goal_id})</span></div>
-        <div style="color:var(--text);">${r.description}</div>
+        <div style="font-weight:600;color:${changedColor};margin-bottom:4px;">Tactic ${esc(r.tactic_id)} <span style="color:var(--text-light);font-weight:500;">(Goal ${esc(r.goal_id)})</span></div>
+        <div style="color:var(--text);">${esc(r.description)}</div>
         <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">
-          ${r.by ? `Owner: <strong>${r.by}</strong>` : ''}${r.by && r.when ? '; ' : ''}${r.when ? `Documented in <strong>${r.when}</strong>` : ''}
+          ${r.by ? `Owner: <strong>${esc(r.by)}</strong>` : ''}${r.by && r.when ? '; ' : ''}${r.when ? `Documented in <strong>${esc(r.when)}</strong>` : ''}
         </div>
       </div>`).join('');
 
   const addedItems = added.map(a => `
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
-        <div style="font-weight:600;color:${changedColor};margin-bottom:3px;">Goal ${a.goal_id} — New Tactic</div>
-        <div style="color:var(--text);">${a.description}</div>
+        <div style="font-weight:600;color:${changedColor};margin-bottom:3px;">Goal ${esc(a.goal_id)} — New Tactic</div>
+        <div style="color:var(--text);">${esc(a.description)}</div>
         <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">
-          ${a.by ? `Submitted by: <strong>${a.by}</strong>` : ''}${a.by && a.when ? '; ' : ''}${a.when ? `Submitted on: <strong>${a.when}</strong>` : ''}
+          ${a.by ? `Submitted by: <strong>${esc(a.by)}</strong>` : ''}${a.by && a.when ? '; ' : ''}${a.when ? `Submitted on: <strong>${esc(a.when)}</strong>` : ''}
         </div>
       </div>`).join('');
 
@@ -1223,9 +1236,9 @@ function renderCompleted() {
     subhead('Objective ' + o.objective_number, items.length) +
     items.map(({t, g}) => `
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
-        <div style="font-weight:600;color:${doneInk};margin-bottom:4px;">Tactic ${t.tactic_id} <span style="color:var(--text-light);font-weight:500;">(Goal ${g.goal_id})</span></div>
-        <div style="color:var(--text);">${t.description}</div>
-        ${g.responsible_committee ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">Owner: <strong>${g.responsible_committee}</strong></div>` : ''}
+        <div style="font-weight:600;color:${doneInk};margin-bottom:4px;">Tactic ${esc(t.tactic_id)} <span style="color:var(--text-light);font-weight:500;">(Goal ${esc(g.goal_id)})</span></div>
+        <div style="color:var(--text);">${esc(t.description)}</div>
+        ${g.responsible_committee ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">Owner: <strong>${esc(g.responsible_committee)}</strong></div>` : ''}
       </div>`).join('')
   ).join('');
   container.innerHTML = `
@@ -1298,16 +1311,16 @@ function renderChangesTimeline(revised, added, changedColor) {
       if (it.kind === 'revised') {
         html += `<div style="font-size:0.83rem;padding:8px 0;border-bottom:1px solid #f0f2f5;">
           <span style="background:${changedColor};color:white;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px;">REVISED</span>
-          <strong>Tactic ${it.tactic_id}</strong> <span style="color:var(--text-light);">(Goal ${it.goal_id})</span>
-          <div style="margin-top:3px;">${it.description}</div>
-          ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Owner: <strong>${it.by}</strong></div>` : ''}
+          <strong>Tactic ${esc(it.tactic_id)}</strong> <span style="color:var(--text-light);">(Goal ${esc(it.goal_id)})</span>
+          <div style="margin-top:3px;">${esc(it.description)}</div>
+          ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Owner: <strong>${esc(it.by)}</strong></div>` : ''}
         </div>`;
       } else {
         html += `<div style="font-size:0.83rem;padding:8px 0;border-bottom:1px solid #f0f2f5;">
           <span style="background:#15803d;color:white;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px;">NEW</span>
-          <strong>Goal ${it.goal_id}</strong> — new tactic
-          <div style="margin-top:3px;">${it.description}</div>
-          ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Submitted by: <strong>${it.by}</strong></div>` : ''}
+          <strong>Goal ${esc(it.goal_id)}</strong> — new tactic
+          <div style="margin-top:3px;">${esc(it.description)}</div>
+          ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Submitted by: <strong>${esc(it.by)}</strong></div>` : ''}
         </div>`;
       }
     });
@@ -1370,8 +1383,8 @@ function renderObjectives() {
     <div class="objective ${hasVisible ? '' : 'hidden'}" data-obj="${oi}">
       <div class="objective-header" onclick="toggleObj(this)">
         <span class="obj-chevron">&#9654;</span>
-        <div class="obj-number">${obj.objective_number}</div>
-        <div class="obj-title">${obj.description}</div>
+        <div class="obj-number">${esc(obj.objective_number)}</div>
+        <div class="obj-title">${esc(obj.description)}</div>
         <div class="obj-ring" title="${completedCount} of ${totalCount} tactics completed across this objective's goals (${totalCount ? Math.round((completedCount/totalCount)*100) : 0}%)">
           ${objectiveRingSVG(obj)}
         </div>
@@ -1410,13 +1423,13 @@ function renderGoal(goal, oi, gi) {
   const hasVisible = goalHasVisibleTactics(goal);
 
   return `
-  <div class="goal ${hasVisible ? '' : 'hidden'}" data-goal="${gi}" id="goal-${goal.goal_id}">
+  <div class="goal ${hasVisible ? '' : 'hidden'}" data-goal="${gi}" id="goal-${esc(goal.goal_id)}">
     <div class="goal-header" onclick="toggleGoal(this)">
       <span class="goal-chevron">&#9654;</span>
-      <span class="goal-desc">${goal.description}</span>
+      <span class="goal-desc">${esc(goal.description)}</span>
       <div class="goal-meta">
-        <span><strong>Owner:</strong> ${goal.responsible_committee}</span>
-        ${goal.last_reported_by ? `<span>Last update: <strong>${goal.last_reported_by}</strong>${formatMonthYear(goal.last_updated) ? ' · ' + formatMonthYear(goal.last_updated) : ''}</span>` : ''}
+        <span><strong>Owner:</strong> ${esc(goal.responsible_committee)}</span>
+        ${goal.last_reported_by ? `<span>Last update: <strong>${esc(goal.last_reported_by)}</strong>${formatMonthYear(goal.last_updated) ? ' · ' + formatMonthYear(goal.last_updated) : ''}</span>` : ''}
       </div>
       <div class="goal-progress-wrap" title="Auto-calculated from tactic statuses">
         <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${pct}%;background:${progressColor}"></div></div>
@@ -1463,12 +1476,12 @@ function renderTactic(t) {
     ? ` <span style="display:inline-block;background:#15803d;color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="New tactic">NEW</span>`
     : '';
   const notesHTML = t.notes
-    ? `<span class="notes-text">${t.notes}</span>`
+    ? `<span class="notes-text">${esc(t.notes)}</span>`
     : `<span class="notes-empty">—</span>`;
   return `
   <tr class="${visible ? '' : 'hidden'}" data-tactic>
     <td class="tactic-id" data-label="ID">${t.tactic_id || '-'}${revBadge}${newBadge}</td>
-    <td data-label="Tactic">${t.description}</td>
+    <td data-label="Tactic">${esc(t.description)}</td>
     <td data-label="Status">${statusBadgeHTML(t.status)}</td>
     <td data-label="Notes">${notesHTML}</td>
   </tr>`;
@@ -1483,7 +1496,7 @@ function buildSearchIndex() {
   if (searchTokens.length === 0) { searchHits = null; return; }
   searchHits = new Set();
   data.objectives.forEach(o => {
-    const objHay = `${o.objective_number} ${o.title || ''} ${o.description || ''}`.toLowerCase();
+    const objHay = `${esc(o.objective_number)} ${o.title || ''} ${o.description || ''}`.toLowerCase();
     o.goals.forEach(g => {
       const goalHay = `${g.goal_id || ''} ${g.description || ''} ${g.responsible_committee || ''}`.toLowerCase();
       g.tactics.forEach(t => {
@@ -1567,7 +1580,7 @@ function getMiniPills(obj) {
   obj.goals.forEach(g => g.tactics.forEach(t => {
     if (!t.status) return;
     const desc = (t.description || '').replace(/"/g, '&quot;');
-    const tip = `${t.tactic_id} — ${t.status}\n${desc}`;
+    const tip = `${esc(t.tactic_id)} — ${t.status}\n${desc}`;
     pills += `<div class="mini-pill" style="background:${colors[t.status]}" title="${tip}"></div>`;
   }));
   return pills;

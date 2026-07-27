@@ -173,6 +173,25 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
   raised and are **still undecided**: ISPE iframes the BSCL Pages URL directly (removes them from the
   critical path entirely), or ISPE grants push access so BSCL syncs the fork itself.
 
+## Escaping & mobile (2026-07-27)
+- **`esc()` added and applied to every data-derived interpolation** — 30 sites in `index.html`, 41 in
+  `admin.html` (the latter includes the string-concatenation form inside `publishReadOnly`, so the published
+  export is covered too). Survey free-text reaches these pages from respondent input via
+  `csv_to_dashboard_json.py` and is rendered with `innerHTML`; without escaping a crafted survey answer
+  executes as markup.
+- **Verified by controlled test, not by inspection.** A payload was injected into `data.json` and both
+  builds were loaded: on the pre-fix build (`3d0f94e`) the `onerror` handler **fired** and an element was
+  injected into the DOM; on the fixed build nothing fired, no elements were injected, and the cell contained
+  74 characters of text with **zero child elements**. `data.json` was restored byte-identical afterwards.
+- **Any new interpolation of survey-sourced text must use `esc()`.** The helper escapes `& < > " '` so it is
+  safe in attribute contexts as well as element content.
+- **Mobile verified at 390 / 360 / 320 px.** Tested via iframe viewports, which is what the media queries
+  actually respond to (direct window resizing did not take effect in this environment). No horizontal
+  overflow at any width, zero elements past the right edge, root font drops to 16px, summary grid reflows
+  2→1 columns, and the tactics table stacks into cards with 13.6px body text. The serif holds at small
+  sizes — the concern raised when the typeface changed is resolved. A real-handset check is still worth
+  doing for touch-target feel, but the layout question is settled.
+
 ## Other
 - **Side-tab accent borders removed** (4px coloured left slabs on the Changes / Completed / at-risk cards)
   in favour of hairline borders — the headers already carried the colour three ways.

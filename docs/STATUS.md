@@ -128,12 +128,16 @@ Paste into a "Custom HTML" block. GitHub Pages allows external iframing.
   `data.json`. `admin.html`'s "Import JSON" imports a `data.json`, not a raw CSV.
 - **`admin.html` is publicly reachable** wherever it's deployed (GitHub Pages on a public repo has no auth).
   It's kept off `public-deploy` for exactly this reason; on `main`/BSCL it's reachable by URL.
-- **Mobile not yet verified on a real device** — responsive CSS is in place but was never screenshot at true
-  phone width. Spot-check on a phone. The serif at the smallest sizes (0.65–0.78rem) is the thing most likely
-  to need a nudge; the summary stat grid reflow *was* verified (6→4→3→2 columns down to 340px).
-- **Survey free-text is interpolated into `innerHTML` unescaped** in both HTML files. Low impact today (the
-  pages hold no credentials), but it is the blocker for any future token-based publishing, and a malicious
-  free-text survey answer would execute. Worth fixing before anything sensitive touches these pages.
+- **Mobile verified 2026-07-27** at 390 / 360 / 320 px (iframe viewports, which is what the media queries
+  respond to). No horizontal overflow at any width, zero elements past the right edge, root correctly drops
+  to 16px, summary grid reflows 2→1 columns, tactics table stacks into cards with 13.6px body text. The
+  serif holds up at small sizes. *Still worth a glance on a real handset* for touch-target feel, but the
+  layout question is settled.
+- ~~Survey free-text interpolated into `innerHTML` unescaped~~ — **fixed 2026-07-27.** An `esc()` helper now
+  wraps all data-derived values (30 sites in `index.html`, 41 in `admin.html`, including the string-concat
+  form inside `publishReadOnly`). Verified by injecting a payload into `data.json`: on the pre-fix build the
+  `onerror` handler executed and an element was injected; after the fix it renders as inert text.
+  **Keep using `esc()` for any new interpolation of survey-sourced text.**
 - **`public-deploy` needs `fonts/` too.** It is a separate branch that omits `admin.html`; if `index.html`
   is updated there without the `fonts/` directory, Source Serif 4 silently falls back to Georgia.
 - **Editing two copies of the plan:** `DEFAULT_DATA` exists in both `index.html` and `admin.html`. Any

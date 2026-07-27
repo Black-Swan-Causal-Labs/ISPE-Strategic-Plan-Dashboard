@@ -976,6 +976,19 @@ const DEFAULT_DATA = {"metadata":{"title":"ISPE Strategic Plan Progress Tracker"
 
 let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
 let currentFilter = 'all';
+
+// ============ HTML ESCAPING ============
+// Survey free-text (descriptions, notes, submitter names) reaches these pages
+// from respondent input via csv_to_dashboard_json.py, and is rendered with
+// innerHTML. Without escaping, a crafted survey answer executes as markup.
+// Handles attribute contexts too, hence the quote entities.
+function esc(v) {
+  if (v === null || v === undefined) return '';
+  return String(v).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
 let searchTerm = '';
 
 // ============ STATUS ENCODING ============
@@ -1131,10 +1144,10 @@ function renderAtRisk() {
     const cls = isDelayed ? 'delayed' : 'not-started';
     const label = isDelayed ? 'Delayed' : 'Not Started';
     return `
-        <div class="at-risk-item" onclick="jumpToGoal('${g.goal_id}')" style="cursor:pointer;">
-          <span class="ar-id">${t.tactic_id}</span>
-          <span class="ar-desc">${t.description}
-            <span class="ar-owner">· ${g.responsible_committee}</span>
+        <div class="at-risk-item" onclick="jumpToGoal('${esc(g.goal_id)}')" style="cursor:pointer;">
+          <span class="ar-id">${esc(t.tactic_id)}</span>
+          <span class="ar-desc">${esc(t.description)}
+            <span class="ar-owner">· ${esc(g.responsible_committee)}</span>
           </span>
           <span class="ar-status ${cls}">${label}</span>
         </div>`;
@@ -1144,7 +1157,7 @@ function renderAtRisk() {
     ${groups.map(({o, items}) => `
       <div class="at-risk-group">
         <div class="ar-group-title">
-          <span class="ar-group-num">Objective ${o.objective_number}</span>
+          <span class="ar-group-num">Objective ${esc(o.objective_number)}</span>
           ${OBJECTIVE_THEMES[o.objective_number] ? `<span class="ar-group-theme">${OBJECTIVE_THEMES[o.objective_number]}</span>` : ''}
           <span class="ar-group-count">${items.length}</span>
         </div>
@@ -1409,19 +1422,19 @@ function renderChanges() {
 
   const revisedItems = revised.map(r => `
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
-        <div style="font-weight:600;color:${changedColor};margin-bottom:4px;">Tactic ${r.tactic_id} <span style="color:var(--text-light);font-weight:500;">(Goal ${r.goal_id})</span></div>
-        <div style="color:var(--text);">${r.description}</div>
+        <div style="font-weight:600;color:${changedColor};margin-bottom:4px;">Tactic ${esc(r.tactic_id)} <span style="color:var(--text-light);font-weight:500;">(Goal ${esc(r.goal_id)})</span></div>
+        <div style="color:var(--text);">${esc(r.description)}</div>
         <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">
-          ${r.by ? `Owner: <strong>${r.by}</strong>` : ''}${r.by && r.when ? '; ' : ''}${r.when ? `Documented in <strong>${r.when}</strong>` : ''}
+          ${r.by ? `Owner: <strong>${esc(r.by)}</strong>` : ''}${r.by && r.when ? '; ' : ''}${r.when ? `Documented in <strong>${esc(r.when)}</strong>` : ''}
         </div>
       </div>`).join('');
 
   const addedItems = added.map(a => `
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
-        <div style="font-weight:600;color:${changedColor};margin-bottom:3px;">Goal ${a.goal_id} — New Tactic</div>
-        <div style="color:var(--text);">${a.description}</div>
+        <div style="font-weight:600;color:${changedColor};margin-bottom:3px;">Goal ${esc(a.goal_id)} — New Tactic</div>
+        <div style="color:var(--text);">${esc(a.description)}</div>
         <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">
-          ${a.by ? `Submitted by: <strong>${a.by}</strong>` : ''}${a.by && a.when ? '; ' : ''}${a.when ? `Submitted on: <strong>${a.when}</strong>` : ''}
+          ${a.by ? `Submitted by: <strong>${esc(a.by)}</strong>` : ''}${a.by && a.when ? '; ' : ''}${a.when ? `Submitted on: <strong>${esc(a.when)}</strong>` : ''}
         </div>
       </div>`).join('');
 
@@ -1485,9 +1498,9 @@ function renderCompleted() {
     subhead('Objective ' + o.objective_number, items.length) +
     items.map(({t, g}) => `
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
-        <div style="font-weight:600;color:${doneColor};margin-bottom:4px;">Tactic ${t.tactic_id} <span style="color:var(--text-light);font-weight:500;">(Goal ${g.goal_id})</span></div>
-        <div style="color:var(--text);">${t.description}</div>
-        ${g.responsible_committee ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">Owner: <strong>${g.responsible_committee}</strong></div>` : ''}
+        <div style="font-weight:600;color:${doneColor};margin-bottom:4px;">Tactic ${esc(t.tactic_id)} <span style="color:var(--text-light);font-weight:500;">(Goal ${esc(g.goal_id)})</span></div>
+        <div style="color:var(--text);">${esc(t.description)}</div>
+        ${g.responsible_committee ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">Owner: <strong>${esc(g.responsible_committee)}</strong></div>` : ''}
       </div>`).join('')
   ).join('');
   container.innerHTML = `
@@ -1558,16 +1571,16 @@ function renderChangesTimeline(revised, added, changedColor) {
       if (it.kind === 'revised') {
         html += `<div style="font-size:0.83rem;padding:8px 0;border-bottom:1px solid #f0f2f5;">
           <span style="background:${changedColor};color:white;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px;">REVISED</span>
-          <strong>Tactic ${it.tactic_id}</strong> <span style="color:var(--text-light);">(Goal ${it.goal_id})</span>
-          <div style="margin-top:3px;">${it.description}</div>
-          ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Owner: <strong>${it.by}</strong></div>` : ''}
+          <strong>Tactic ${esc(it.tactic_id)}</strong> <span style="color:var(--text-light);">(Goal ${esc(it.goal_id)})</span>
+          <div style="margin-top:3px;">${esc(it.description)}</div>
+          ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Owner: <strong>${esc(it.by)}</strong></div>` : ''}
         </div>`;
       } else {
         html += `<div style="font-size:0.83rem;padding:8px 0;border-bottom:1px solid #f0f2f5;">
           <span style="background:#15803d;color:white;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px;">NEW</span>
-          <strong>Goal ${it.goal_id}</strong> — new tactic
-          <div style="margin-top:3px;">${it.description}</div>
-          ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Submitted by: <strong>${it.by}</strong></div>` : ''}
+          <strong>Goal ${esc(it.goal_id)}</strong> — new tactic
+          <div style="margin-top:3px;">${esc(it.description)}</div>
+          ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Submitted by: <strong>${esc(it.by)}</strong></div>` : ''}
         </div>`;
       }
     });
@@ -1632,8 +1645,8 @@ function renderObjectives() {
     <div class="objective ${hasVisible ? '' : 'hidden'}" data-obj="${oi}">
       <div class="objective-header" onclick="toggleObj(this)">
         <span class="obj-chevron">&#9654;</span>
-        <div class="obj-number">${obj.objective_number}</div>
-        <div class="obj-title">${obj.description}</div>
+        <div class="obj-number">${esc(obj.objective_number)}</div>
+        <div class="obj-title">${esc(obj.description)}</div>
         <div class="obj-ring" title="${completedCount} of ${totalCount} tactics completed">
           ${objectiveRingSVG(obj)}
         </div>
@@ -1667,13 +1680,13 @@ function renderGoal(goal, oi, gi) {
   const hasVisible = goalHasVisibleTactics(goal);
 
   return `
-  <div class="goal ${hasVisible ? '' : 'hidden'}" data-goal="${gi}" id="goal-${goal.goal_id}">
+  <div class="goal ${hasVisible ? '' : 'hidden'}" data-goal="${gi}" id="goal-${esc(goal.goal_id)}">
     <div class="goal-header" onclick="toggleGoal(this)">
       <span class="goal-chevron">&#9654;</span>
-      <span class="goal-desc">${goal.description}</span>
+      <span class="goal-desc">${esc(goal.description)}</span>
       <div class="goal-meta">
-        <span><strong>Owner:</strong> ${goal.responsible_committee}</span>
-        ${goal.last_reported_by ? `<span>Last update: <strong>${goal.last_reported_by}</strong>${formatMonthYear(goal.last_updated) ? ' · ' + formatMonthYear(goal.last_updated) : ''}</span>` : ''}
+        <span><strong>Owner:</strong> ${esc(goal.responsible_committee)}</span>
+        ${goal.last_reported_by ? `<span>Last update: <strong>${esc(goal.last_reported_by)}</strong>${formatMonthYear(goal.last_updated) ? ' · ' + formatMonthYear(goal.last_updated) : ''}</span>` : ''}
       </div>
       <div class="goal-progress-wrap" title="Auto-calculated from tactic statuses">
         <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${pct}%;background:${progressColor}"></div></div>
@@ -1706,7 +1719,7 @@ function renderTactic(t, oi, gi, ti) {
   return `
   <tr class="${visible ? '' : 'hidden'}" data-tactic>
     <td class="tactic-id" data-label="ID">${t.tactic_id || '-'}${t.is_revised ? ` <span style="display:inline-block;background:${data.changed_color || '#a02a93'};color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="Revised — see Changes section above">REV</span>` : ''}${t.is_new_in_plan ? ` <span style="display:inline-block;background:#15803d;color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="New tactic">NEW</span>` : ''}</td>
-    <td data-label="Tactic">${t.description}</td>
+    <td data-label="Tactic">${esc(t.description)}</td>
     <td data-label="Status">
       <select class="status-select" data-status="${t.status}" onchange="updateStatus(${oi},${gi},${ti},this.value,this)">
         <option ${t.status==='Not Started'?'selected':''}>Not Started</option>
@@ -1728,7 +1741,7 @@ function buildSearchIndex() {
   if (searchTokens.length === 0) { searchHits = null; return; }
   searchHits = new Set();
   data.objectives.forEach(o => {
-    const objHay = `${o.objective_number} ${o.title || ''} ${o.description || ''}`.toLowerCase();
+    const objHay = `${esc(o.objective_number)} ${o.title || ''} ${o.description || ''}`.toLowerCase();
     o.goals.forEach(g => {
       const goalHay = `${g.goal_id || ''} ${g.description || ''} ${g.responsible_committee || ''}`.toLowerCase();
       g.tactics.forEach(t => {
@@ -1840,7 +1853,7 @@ function getMiniPills(obj) {
   obj.goals.forEach(g => g.tactics.forEach(t => {
     if (!t.status) return;
     const desc = (t.description || '').replace(/"/g, '&quot;');
-    const tip = `${t.tactic_id} — ${t.status}\n${desc}`;
+    const tip = `${esc(t.tactic_id)} — ${t.status}\n${desc}`;
     pills += `<div class="mini-pill" style="background:${colors[t.status]}" title="${tip}"></div>`;
   }));
   return pills;
@@ -2128,14 +2141,14 @@ function publishReadOnly() {
     obj.goals.forEach(goal => {
       let rows = '';
       goal.tactics.forEach(t => {
-        rows += '<tr><td style="padding:8px 12px;border-bottom:1px solid #f0f2f5;font-weight:600;white-space:nowrap;color:#6b7c93;font-size:0.8rem;">'+(t.tactic_id||'-')+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">'+t.description+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f2f5;">'+badge(t.status)+'</td></tr>';
+        rows += '<tr><td style="padding:8px 12px;border-bottom:1px solid #f0f2f5;font-weight:600;white-space:nowrap;color:#6b7c93;font-size:0.8rem;">'+esc(t.tactic_id||'-')+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">'+esc(t.description)+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f2f5;">'+badge(t.status)+'</td></tr>';
       });
-      goals += '<div style="border:1px solid #e1e8ef;border-radius:8px;margin-bottom:10px;overflow:hidden;"><div style="padding:12px 16px;background:#fafbfc;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-weight:700;color:#1a2a3a;font-size:0.85rem;">'+goal.goal_id+'</span><span style="font-size:0.83rem;flex:1;">'+goal.description+'</span><span style="font-size:0.7rem;background:#eef1f5;padding:3px 10px;border-radius:12px;color:#6b7c93;">'+goal.responsible_committee+'</span>'+progressBar(computeGoalProgress(goal).score,computeGoalProgress(goal).max,80)+'</div><table style="width:100%;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:8px 12px;background:#f4f6f9;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px;color:#6b7c93;border-bottom:1px solid #e1e8ef;width:60px;">ID</th><th style="text-align:left;padding:8px 12px;background:#f4f6f9;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px;color:#6b7c93;border-bottom:1px solid #e1e8ef;">Description</th><th style="text-align:left;padding:8px 12px;background:#f4f6f9;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px;color:#6b7c93;border-bottom:1px solid #e1e8ef;width:180px;">Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+      goals += '<div style="border:1px solid #e1e8ef;border-radius:8px;margin-bottom:10px;overflow:hidden;"><div style="padding:12px 16px;background:#fafbfc;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-weight:700;color:#1a2a3a;font-size:0.85rem;">'+esc(goal.goal_id)+'</span><span style="font-size:0.83rem;flex:1;">'+esc(goal.description)+'</span><span style="font-size:0.7rem;background:#eef1f5;padding:3px 10px;border-radius:12px;color:#6b7c93;">'+esc(goal.responsible_committee)+'</span>'+progressBar(computeGoalProgress(goal).score,computeGoalProgress(goal).max,80)+'</div><table style="width:100%;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:8px 12px;background:#f4f6f9;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px;color:#6b7c93;border-bottom:1px solid #e1e8ef;width:60px;">ID</th><th style="text-align:left;padding:8px 12px;background:#f4f6f9;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px;color:#6b7c93;border-bottom:1px solid #e1e8ef;">Description</th><th style="text-align:left;padding:8px 12px;background:#f4f6f9;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px;color:#6b7c93;border-bottom:1px solid #e1e8ef;width:180px;">Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
     });
     const cc = obj.goals.reduce((a,g)=>a+g.tactics.filter(t=>t.status==="Completed").length,0);
     const tt = obj.goals.reduce((a,g)=>a+g.tactics.length,0);
     const pct = tt>0?Math.round((cc/tt)*100):0;
-    objectives += '<details style="background:white;border-radius:10px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;"><summary style="padding:16px 20px;cursor:pointer;display:flex;align-items:center;gap:14px;list-style:none;font-size:0.93rem;"><div style="background:#1a2a3a;color:white;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">'+obj.objective_number+'</div><span style="font-weight:600;flex:1;">'+obj.description+'</span>'+progressBar(cc,tt,100)+'</summary><div style="padding:4px 20px 18px;">'+goals+'</div></details>';
+    objectives += '<details style="background:white;border-radius:10px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;"><summary style="padding:16px 20px;cursor:pointer;display:flex;align-items:center;gap:14px;list-style:none;font-size:0.93rem;"><div style="background:#1a2a3a;color:white;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">'+esc(obj.objective_number)+'</div><span style="font-weight:600;flex:1;">'+esc(obj.description)+'</span>'+progressBar(cc,tt,100)+'</summary><div style="padding:4px 20px 18px;">'+goals+'</div></details>';
   });
 
   let revisedNew = 0;
