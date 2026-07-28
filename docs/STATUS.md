@@ -128,8 +128,10 @@ Paste into a "Custom HTML" block. GitHub Pages allows external iframing.
   the survey's own "Changed" responses (recommended; not yet done).
 - **The script is not automatic** — someone must run `csv_to_dashboard_json.py` with the new CSV, then commit
   `data.json`. `admin.html`'s "Import JSON" imports a `data.json`, not a raw CSV.
-- **`admin.html` is publicly reachable** wherever it's deployed (GitHub Pages on a public repo has no auth).
-  It's kept off `public-deploy` for exactly this reason; on `main`/BSCL it's reachable by URL.
+- **`admin.html` is publicly reachable on any branch a Pages site serves** (GitHub Pages on a public repo
+  has no auth). It is kept off `public-deploy` for exactly this reason. **On BSCL this is now resolved** —
+  Pages was switched to `public-deploy` on 2026-07-27 and admin returns 404. The warning still applies to
+  ISPE's fork: whatever branch they serve is public.
 - **Mobile verified 2026-07-27** at 390 / 360 / 320 px (iframe viewports, which is what the media queries
   respond to). No horizontal overflow at any width, zero elements past the right edge, root correctly drops
   to 16px, summary grid reflows 2→1 columns, tactics table stacks into cards with 13.6px body text. The

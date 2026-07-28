@@ -144,8 +144,10 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
 ## Save / Publish are now git operations
 - Added **`admin-server.py`**: a local server exposing `/api/save` (write `data.json` + commit) and
   `/api/publish` (+ push). Bound to `127.0.0.1` only — it can commit to the repository.
-- **Why local rather than the GitHub API:** `admin.html` is publicly reachable, so any embedded token would
-  be world-readable. A runtime-entered token in `localStorage` is also unsafe here while survey free-text is
+- **Why local rather than the GitHub API:** `admin.html` was publicly reachable when this was decided, so
+  any embedded token would have been world-readable. *(Pages was switched to `public-deploy` on 2026-07-27
+  and admin now 404s — but the reasoning still holds: a fork republishes whatever is on the branch it
+  serves, and Pages on a public repo has no auth.)* A runtime-entered token in `localStorage` is also unsafe here while survey free-text is
   still interpolated into `innerHTML` unescaped.
 - `admin.html` **degrades gracefully** — with no helper it falls back to the previous download behaviour, so
   the public copy is unaffected.
@@ -163,9 +165,12 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
   independently; without it the font files are untrackable on that branch and the live ISPE-facing site
   silently falls back to Georgia. **Any future file `index.html` depends on must be added to both
   allowlists.**
-- **BSCL Pages serves `main`, which is why `admin.html` is publicly reachable.** The documented intent was
-  always `public-deploy`. Switching the Pages source branch un-publishes admin with no code change; left to
-  the owner as a settings decision. Not a substitute for real auth — GitHub Pages on a public repo has none.
+- **BSCL Pages was switched from `main` to `public-deploy` on 2026-07-27**, matching the intent recorded
+  here from the start. Verified live: `index.html` 200, `admin.html` **404**, `fonts/` 200. `admin.html` is
+  now a local tool only, run through `admin-server.py`. This is "not published", **not** access control —
+  Pages on a public repo has no auth, and a fork republishes whatever branch it serves.
+- **Copyright holder confirmed as ISPE** (2026-07-27), so the footer was already correct. It had been an
+  assumption; it is now stated fact.
 - **ISPE had not forked as of 2026-07-27** (`ispe-sp/...` → 404), so `public-deploy` was brought current
   *before* any fork exists. That is the cheap ordering; fixing it after a fork means asking ISPE to re-sync.
 - **Fork sync is a standing dependency on ISPE.** GitHub forks do not auto-update; someone there must click
@@ -191,6 +196,17 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
   2→1 columns, and the tactics table stacks into cards with 13.6px body text. The serif holds at small
   sizes — the concern raised when the typeface changed is resolved. A real-handset check is still worth
   doing for touch-target feel, but the layout question is settled.
+
+## Import hardening (2026-07-27)
+- **Import replaced the whole dataset with no shape check, no confirmation, and persisted before rendering.**
+  `JSON.parse` accepts `{}`, `[]`, and `"hello"`, and `autoSave()` ran *before* `renderAll()` — so a
+  malformed-but-parseable file was written to `localStorage` before anything discovered it was broken.
+- Now: validate before `data` is touched; confirm showing **incoming vs. current** counts, so a wrong file
+  looks wrong; keep a rollback copy in case rendering throws; persist only after the data proves it renders.
+- **`takeSaveSnapshot()` now runs on a successful import.** Without it the Change Log diffed the imported
+  data against the pre-import baseline and reported pure noise.
+- The browser validator is **deliberately kept in step with `validate_payload()` in `admin-server.py`** —
+  both guard the same file from opposite directions. Loosen one, loosen the other.
 
 ## Other
 - **Side-tab accent borders removed** (4px coloured left slabs on the Changes / Completed / at-risk cards)
