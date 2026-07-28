@@ -880,7 +880,6 @@
     <div class="last-saved" id="lastSaved"></div>
   </div>
 </div>
-<input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <div class="container">
   <!-- Admin Control Panel -->
@@ -897,8 +896,6 @@
       <div class="admin-divider"></div>
       <div class="admin-btn-group">
         <button class="admin-btn primary" onclick="saveLocal()">Save</button>
-        <button class="admin-btn" onclick="exportJSON()">Export JSON</button>
-        <button class="admin-btn" onclick="importJSON()">Import JSON</button>
       </div>
       <div class="admin-divider"></div>
       <div class="admin-btn-group">
@@ -2068,114 +2065,6 @@ function showChangelog() {
 
 function closeChangelog() {
   document.getElementById('changelogModal').classList.add('hidden');
-}
-
-function exportJSON() {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `ISPE_SP_Progress_${data.metadata.as_of_date.replace(/\s/g, '_')}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  showToast('JSON exported successfully');
-}
-
-function importJSON() {
-  document.getElementById('importFile').click();
-}
-
-// Shape check for an imported dataset. JSON.parse happily accepts `{}`, `[]`
-// or `"hello"`, and renderAll() would then throw partway through and leave a
-// half-drawn page. Kept deliberately in step with validate_payload() in
-// admin-server.py — if you loosen one, loosen the other.
-// Returns an error string, or null when the payload is usable.
-function validateDataset(p) {
-  if (p === null || typeof p !== 'object' || Array.isArray(p)) return 'not a JSON object';
-  if (!Array.isArray(p.objectives)) return "missing 'objectives' array";
-  if (!p.objectives.length) return "'objectives' is empty";
-  if (!p.metadata || typeof p.metadata !== 'object') return "missing 'metadata'";
-  for (const obj of p.objectives) {
-    if (!obj || !Array.isArray(obj.goals)) return 'an objective is missing its goals array';
-    for (const goal of obj.goals) {
-      if (!goal || !Array.isArray(goal.tactics)) {
-        return `goal ${goal && goal.goal_id ? goal.goal_id : '?'} has no tactics array`;
-      }
-    }
-  }
-  return null;
-}
-
-function describeDataset(p) {
-  let goals = 0, tactics = 0;
-  p.objectives.forEach(o => o.goals.forEach(g => { goals++; tactics += g.tactics.length; }));
-  const asOf = (p.metadata && p.metadata.as_of_date) || 'no date';
-  return `${p.objectives.length} objectives, ${goals} goals, ${tactics} tactics (as of ${asOf})`;
-}
-
-function handleImport(e) {
-  const file = e.target.files[0];
-  e.target.value = '';           // reset first, so re-picking the same file works
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onerror = () => showToast('Could not read that file.');
-  reader.onload = function(ev) {
-    let incoming;
-    try {
-      incoming = JSON.parse(ev.target.result);
-    } catch (err) {
-      showToast('Not valid JSON — nothing was changed.');
-      return;
-    }
-
-    // Validate BEFORE touching `data`. The previous version assigned first and
-    // called autoSave() before renderAll(), so a malformed file was persisted
-    // before anything discovered it was broken.
-    const problem = validateDataset(incoming);
-    if (problem) {
-      showToast(`Rejected: ${problem}. Nothing was changed.`);
-      return;
-    }
-
-    // Replacing the whole plan is destructive and was previously silent.
-    if (!confirm(
-      'Replace ALL current data with this file?\n\n' +
-      `Incoming: ${describeDataset(incoming)}\n` +
-      `Current:  ${describeDataset(data)}\n\n` +
-      'Unsaved changes will be lost. This cannot be undone from the UI.'
-    )) {
-      showToast('Import cancelled.');
-      return;
-    }
-
-    // Keep a rollback copy: if rendering the new dataset throws, we restore
-    // rather than leaving the page half-drawn against unusable data.
-    const rollback = JSON.parse(JSON.stringify(data));
-    try {
-      data = incoming;
-      // An imported file may carry an older status_colors block. Without this
-      // the rings and donut silently revert to the pre-2026 palette (the
-      // indistinguishable On Track / Delayed yellows) until the page reloads.
-      applyStatusPalette();
-      renderAll();
-      const el = document.getElementById('asOfDate');
-      if (el && data.metadata.as_of_date) el.textContent = data.metadata.as_of_date;
-    } catch (err) {
-      data = rollback;
-      applyStatusPalette();
-      renderAll();
-      showToast('Import failed while rendering — previous data restored.');
-      return;
-    }
-
-    // Only persist once the data has proven it renders. takeSaveSnapshot()
-    // resets the change-log baseline too; without it, Change Log would diff the
-    // imported data against the pre-import snapshot and report pure noise.
-    takeSaveSnapshot();
-    autoSave();
-    updateLastSaved();
-    showToast(`Imported ${describeDataset(incoming)}`);
-  };
-  reader.readAsText(file);
 }
 
 // ============ PUBLISH READ-ONLY ============

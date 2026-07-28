@@ -127,7 +127,7 @@ Paste into a "Custom HTML" block. GitHub Pages allows external iframing.
   either (a) manually reset the flags in the plan structure, or (b) change the script to drive "Revised" from
   the survey's own "Changed" responses (recommended; not yet done).
 - **The script is not automatic** — someone must run `csv_to_dashboard_json.py` with the new CSV, then commit
-  `data.json`. `admin.html`'s "Import JSON" imports a `data.json`, not a raw CSV.
+  `data.json`. **Import/Export JSON were removed on 2026-07-27** — see below.
 - **`admin.html` is publicly reachable on any branch a Pages site serves** (GitHub Pages on a public repo
   has no auth). It is kept off `public-deploy` for exactly this reason. **On BSCL this is now resolved** —
   Pages was switched to `public-deploy` on 2026-07-27 and admin returns 404. The warning still applies to
@@ -148,12 +148,17 @@ Paste into a "Custom HTML" block. GitHub Pages allows external iframing.
   structural plan change (add/remove a tactic, reset flags) must be made in both, and reflected in `data.json`.
   The script only reads/writes via `index.html` + `data.json`.
 
-## Importing a data.json into admin (hardened 2026-07-27)
-"Import JSON" replaces the **entire** dataset. It now: validates the file's shape before touching anything,
-shows a confirmation naming the incoming vs. current counts, keeps a rollback copy in case rendering fails,
-and only persists (and resets the change-log baseline) after the data has proven it renders. A malformed
-file is rejected with a specific reason and **nothing is changed**. The browser-side check is kept in step
-with `validate_payload()` in `admin-server.py` — loosen one, loosen the other.
+## Import / Export JSON were removed (2026-07-27)
+Both buttons are gone from the Admin Control Panel. Git covers what they did, better:
+- **Export** was the only real save before `admin-server.py` existed. Now **Save** commits `data.json`, so
+  history, backups, diffs, and sharing all come from git.
+- **Import** was never needed by the pipeline: `csv_to_dashboard_json.py` writes `data.json` directly and
+  both pages fetch it on load, so a new cycle is "regenerate the file, reload the page". Restoring an older
+  version is `git checkout <sha> -- data.json`, which has history and cannot be pointed at the wrong file.
+- It was also the most destructive control in the tool — one click replaced the whole plan.
+
+`validate_payload()` **remains in `admin-server.py`** and still guards every write, since Save/Publish is
+now the only path that overwrites `data.json`.
 
 ## Updating the data (current best-understanding workflow)
 1. Get the new Alchemer CSV (keep it out of git — it has PII).

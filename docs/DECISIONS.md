@@ -197,16 +197,22 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
   sizes — the concern raised when the typeface changed is resolved. A real-handset check is still worth
   doing for touch-target feel, but the layout question is settled.
 
-## Import hardening (2026-07-27)
-- **Import replaced the whole dataset with no shape check, no confirmation, and persisted before rendering.**
-  `JSON.parse` accepts `{}`, `[]`, and `"hello"`, and `autoSave()` ran *before* `renderAll()` — so a
-  malformed-but-parseable file was written to `localStorage` before anything discovered it was broken.
-- Now: validate before `data` is touched; confirm showing **incoming vs. current** counts, so a wrong file
-  looks wrong; keep a rollback copy in case rendering throws; persist only after the data proves it renders.
-- **`takeSaveSnapshot()` now runs on a successful import.** Without it the Change Log diffed the imported
-  data against the pre-import baseline and reported pure noise.
-- The browser validator is **deliberately kept in step with `validate_payload()` in `admin-server.py`** —
-  both guard the same file from opposite directions. Loosen one, loosen the other.
+## Import / Export JSON — hardened, then removed (2026-07-27)
+- Import was first **hardened**: it had replaced the whole dataset with no shape check, no confirmation, and
+  persisted *before* rendering, so a malformed-but-parseable file (`JSON.parse` accepts `{}`, `[]`,
+  `"hello"`) was written to `localStorage` before anything discovered it was broken.
+- Then **both buttons were removed entirely**, on the reasoning that once Save commits to git, they are
+  redundant with git and Import was the most destructive control in the tool:
+  - **Export** was the only real save before `admin-server.py`. Git now provides history, backups, diffs
+    and sharing.
+  - **Import** was never in the pipeline's path — `csv_to_dashboard_json.py` writes `data.json` directly
+    and both pages fetch it on load, so a new cycle is "regenerate, reload". Restoring an old version is
+    `git checkout <sha> -- data.json`, which has history and cannot be aimed at the wrong file.
+- Recorded rather than quietly deleted because hardening-then-removing looks like churn otherwise. The
+  hardening was correct while the feature existed; "is it safe?" and "should it exist?" are separate
+  questions and were answered in that order.
+- **`validate_payload()` stays in `admin-server.py`.** Save/Publish is now the only path that overwrites
+  `data.json`, so that check still guards every write. Its browser-side mirror went with the import UI.
 
 ## Other
 - **Side-tab accent borders removed** (4px coloured left slabs on the Changes / Completed / at-risk cards)
