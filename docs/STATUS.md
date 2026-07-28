@@ -19,13 +19,15 @@ python3 -m http.server 8000      # → http://localhost:8000/index.html
 |---|---|
 | `main` | current — all work through 2026-07-27 |
 | `public-deploy` | current — synced from `main`, `admin.html` correctly absent |
-| BSCL Pages | serving **`main`** (so `admin.html` is publicly reachable — see Live URLs) |
+| BSCL Pages | serving **`public-deploy`** — `admin.html` is **no longer public** (404 verified) |
 | ISPE fork | **does not exist yet** (404 as of 2026-07-27) |
 
-**Three things are waiting on a human, not on code** — see the sections below for detail:
-1. Flip BSCL Pages to serve `public-deploy` (one dropdown; un-publishes `admin.html`).
-2. Confirm the footer copyright holder — it currently names ISPE, which was an assumption.
-3. Decide how ISPE will get updates (fork + sync, vs. iframe BSCL directly, vs. push access).
+**Open items** (as of 2026-07-27):
+1. ~~Flip BSCL Pages to `public-deploy`~~ — **done.** `admin.html` now returns 404 publicly.
+2. ~~Confirm the footer copyright holder~~ — **confirmed: ISPE owns it.** The footer was already correct.
+3. **How ISPE receives updates — still open.** An update from them is expected the week of 2026-07-27.
+   The thing to settle: once they fork, *they* must click "Sync fork" for every data refresh. Ask for push
+   access to their fork, or propose they embed the BSCL Pages URL directly, so they are not the bottleneck.
 
 ## What this is
 A static, client-side dashboard tracking progress on the ISPE Strategic Plan (2024–2029).
@@ -54,11 +56,11 @@ ISPE website as an `<iframe>`. No backend — everything runs in the browser.
 
 ## Live URLs & deployment state (verified 2026-07-27)
 - **Black Swan (live now):** https://black-swan-causal-labs.github.io/ISPE-Strategic-Plan-Dashboard/
-  - **BSCL Pages is configured to serve `main`, not `public-deploy`.** That is why
-    `.../admin.html` is publicly reachable. It contradicts the intent recorded in this file.
-  - **Pending, one-click, no code change:** switch the Pages source branch to `public-deploy` in repo
-    Settings → Pages. That un-publishes `admin.html` immediately. `public-deploy` is current, so there is
-    no downside to flipping it. *(Left to the owner — it is a GitHub settings change.)*
+  - **Pages serves `public-deploy`** (switched 2026-07-27). Verified live: `index.html` 200,
+    `admin.html` **404**, `fonts/` 200. The admin panel is no longer reachable from the internet — it is a
+    local tool, run via `python3 admin-server.py`.
+  - This is "not published", not "access-controlled". If admin ever needs to be shared with ISPE leaders,
+    that is a separate problem (GitHub Pages on a public repo has no auth) — see DECISIONS.
 - **ISPE (not yet created):** `github.com/ispe-sp/ISPE-Strategic-Plan-Dashboard` returned **404** as of
   2026-07-27 — **ISPE has not forked yet.** Nothing downstream is stale; there is a clean window to get
   `public-deploy` right before they fork, which is already done.
