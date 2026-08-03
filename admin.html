@@ -749,6 +749,23 @@
     margin-top: 2px;
   }
 
+  /* Retired tactics: superseded by a later tactic. Shown for the record but
+     excluded from every progress count - see .retired-note under the tracker. */
+  .retired-badge {
+    display: inline-block; background: #6b7280; color: #fff;
+    font-size: 0.6rem; font-weight: 700; padding: 1px 5px;
+    border-radius: 8px; margin-left: 2px; vertical-align: middle;
+    letter-spacing: 0.3px; white-space: nowrap;
+  }
+  tr.tactic-retired td { opacity: 0.7; }
+  .retired-note {
+    background: #fff; border: 1px solid var(--border);
+    border-left: 3px solid #6b7280; border-radius: 8px;
+    padding: 13px 18px; margin-bottom: 24px;
+    font-size: 0.78rem; line-height: 1.55; color: var(--text-light);
+  }
+  .retired-note strong { color: var(--text); font-weight: 600; }
+
   /* Content contact — sits between the last objective and the footer */
   .content-contact {
     text-align: center;
@@ -946,6 +963,9 @@
   <h2 class="section-heading" style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--header-bg); margin: 28px 0 14px; padding-bottom: 10px; border-bottom: 2px solid var(--header-bg);">Strategic Plan Objectives and Goals</h2>
   <div id="objectivesContainer"></div>
 
+  <!-- Retirement note: explains the dagger on retired tactic rows. -->
+  <div id="retiredNote"></div>
+
   <!-- Content contact: sits after the last objective, above the footer. -->
   <div class="content-contact">
     Questions about the content? Email
@@ -1051,9 +1071,20 @@ async function init() {
   }));
   const stamp = document.getElementById('surveyStamp');
   if (stamp) {
+    const meta = data.metadata || {};
     const parts = [];
-    if (latest) parts.push('Survey data through ' + formatMonthYear(latest));
-    if (committees.size) parts.push(committees.size + ' committee response' + (committees.size === 1 ? '' : 's'));
+    // Prefer the cycle this file was built from. Deriving the date from tactic
+    // provenance alone pins the stamp to the newest carried-forward date, and
+    // the current export carries no dates at all - so ingesting fresh data was
+    // making this stamp MORE stale rather than less.
+    const through = meta.cycle_label || (latest ? formatMonthYear(latest) : null);
+    if (through) parts.push('Survey data through ' + through);
+    const thisCycle = (meta.cycle_committees || []).length;
+    if (thisCycle) {
+      parts.push(thisCycle + ' committee response' + (thisCycle === 1 ? '' : 's') + ' this cycle');
+    } else if (committees.size) {
+      parts.push(committees.size + ' committee response' + (committees.size === 1 ? '' : 's'));
+    }
     stamp.textContent = parts.join(' · ');
   }
   loadSaveSnapshot();
@@ -1079,6 +1110,33 @@ function renderAll() {
   renderChanges();
   renderCompleted();
   renderObjectives();
+  renderRetiredNote();
+}
+
+// The dagger on a retired tactic's row points here. Grouped by retirement date
+// and successor so it reads as one statement per retirement event rather than
+// one line per tactic.
+function renderRetiredNote() {
+  const el = document.getElementById('retiredNote');
+  if (!el) return;
+  const groups = {};
+  data.objectives.forEach(o => o.goals.forEach(g => (g.tactics || []).forEach(t => {
+    if (!isRetired(t)) return;
+    const key = `${t.retired_as_of || 'an earlier cycle'}|${t.superseded_by || ''}`;
+    (groups[key] = groups[key] || []).push(t.tactic_id);
+  })));
+  const keys = Object.keys(groups);
+  if (!keys.length) { el.innerHTML = ''; return; }
+  const lines = keys.map(key => {
+    const parts = key.split('|');
+    const ids = groups[key].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+    const list = ids.map(i => `<strong>${esc(i)}</strong>`).join(', ');
+    return `Tactic${ids.length > 1 ? 's' : ''} ${list} retired as of <strong>${esc(parts[0])}</strong>`
+      + (parts[1] ? `, superseded by tactic <strong>${esc(parts[1])}</strong>` : '') + '.';
+  });
+  el.innerHTML = `<div class="retired-note"><span class="sn-star">&dagger;</span> ${lines.join(' ')} `
+    + `They remain listed above for the record, but are excluded from all progress counts, `
+    + `so every figure on this page describes the <strong>${countActiveAll()}</strong> tactics still active.</div>`;
 }
 
 function jumpToGoal(goalId) {
@@ -1120,7 +1178,10 @@ function renderAtRisk() {
   const groups = [];
   data.objectives.forEach(o => {
     const items = [];
-    o.goals.forEach(g => g.tactics.forEach(t => {
+    // Retired tactics carry their last status (usually Not Started) but are
+    // superseded work - flagging them as at risk would ask leadership to chase
+    // tactics that no longer exist.
+    o.goals.forEach(g => activeTactics(g).forEach(t => {
       if (AT_RISK_STATUSES.includes(t.status)) items.push({ t, g });
     }));
     if (items.length === 0) return;
@@ -1180,7 +1241,10 @@ function renderSummary() {
   const statuslessCountable = !searchHits
     && (currentFilter === 'all' || currentFilter === 'Revised');
   data.objectives.forEach(o => o.goals.forEach(g => {
-    g.tactics.forEach(t => {
+    // Retired tactics are excluded here too, so every card describes the same
+    // active population. The Revisions section below still lists them, because
+    // being retired IS the revision being documented.
+    activeTactics(g).forEach(t => {
       if ((t.is_revised || t.is_new_in_plan) && tacticVisible(t)) revisedCount++;
     });
     if (statuslessCountable) revisedCount += (g.new_tactics || []).length;
@@ -1193,8 +1257,12 @@ function renderSummary() {
     { label: 'Completed',   count: counts['Completed'] || 0,           color: 'var(--completed)' },
     { label: 'Revised / New', count: revisedCount,                     color: 'var(--changed)', overlay: true },
   ];
+  const retiredTotal = (data.objectives || []).reduce((n, o) =>
+    n + o.goals.reduce((m, g) => m + (g.tactics || []).filter(isRetired).length, 0), 0);
   const note = `<div class="summary-note">`
     + `<span class="sn-star">*</span> The four statuses above sum to Total (${total}). `
+    + (retiredTotal ? `${retiredTotal} retired tactic${retiredTotal === 1 ? ' is' : 's are'} excluded from every figure here `
+        + `(see the note under the tracker). ` : '')
     + `Revised / New is a separate overlay tag: a revised tactic also carries one of those four statuses, `
     + `and newly added tactics are counted here too, so it sits outside the total.</div>`;
   document.getElementById('summaryRow').innerHTML = stats.map(s =>
@@ -1206,7 +1274,7 @@ function getStatusCounts() {
   // Only count tactics matching the current search/filter, so the
   // summary cards and donut chart reflect what's visible below.
   const counts = {};
-  data.objectives.forEach(o => o.goals.forEach(g => g.tactics.forEach(t => {
+  data.objectives.forEach(o => o.goals.forEach(g => activeTactics(g).forEach(t => {
     if (!tacticVisible(t)) return;
     counts[t.status] = (counts[t.status] || 0) + 1;
   })));
@@ -1372,6 +1440,10 @@ function renderChanges() {
   // Source of truth: tactics in DEFAULT_DATA flagged is_revised / is_new_in_plan
   // (these come from the March 2026 xlsx tracker). We also still pick up
   // genuinely new tactics submitted via the survey that aren't in the xlsx.
+  // Revisions reported through the survey carry their own date. The rest came
+  // from the xlsx tracker and are dated to it. This used to be the literal
+  // string 'March 2026' in both places, which no data file could ever move.
+  const trackerLabel = (data.metadata && data.metadata.tracker_label) || 'March 2026';
   data.objectives.forEach(o => o.goals.forEach(g => {
     g.tactics.forEach(t => {
       if (t.is_revised) {
@@ -1380,7 +1452,10 @@ function renderChanges() {
           tactic_id: t.tactic_id,
           description: t.description,
           by: g.responsible_committee,
-          when: 'March 2026',
+          when: formatMonthYear(t.revised_at) || trackerLabel,
+          detail: t.revised_description || '',
+          retired: isRetired(t),
+          superseded_by: t.superseded_by || '',
         });
       }
       if (t.is_new_in_plan) {
@@ -1388,7 +1463,7 @@ function renderChanges() {
           goal_id: g.goal_id,
           description: t.description,
           by: g.responsible_committee,
-          when: 'March 2026',
+          when: trackerLabel,
           source: 'tracker',
         });
       }
@@ -1419,8 +1494,9 @@ function renderChanges() {
 
   const revisedItems = revised.map(r => `
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
-        <div style="font-weight:600;color:${changedColor};margin-bottom:4px;">Tactic ${esc(r.tactic_id)} <span style="color:var(--text-light);font-weight:500;">(Goal ${esc(r.goal_id)})</span></div>
+        <div style="font-weight:600;color:${changedColor};margin-bottom:4px;">Tactic ${esc(r.tactic_id)} <span style="color:var(--text-light);font-weight:500;">(Goal ${esc(r.goal_id)})</span>${r.retired ? ` <span class="retired-badge">Retired</span>` : ''}</div>
         <div style="color:var(--text);">${esc(r.description)}</div>
+        ${r.detail ? `<div style="color:var(--text-light);font-size:0.78rem;margin-top:5px;padding-left:10px;border-left:2px solid var(--border);">${esc(r.detail)}</div>` : ''}
         <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">
           ${r.by ? `Owner: <strong>${esc(r.by)}</strong>` : ''}${r.by && r.when ? '; ' : ''}${r.when ? `Documented in <strong>${esc(r.when)}</strong>` : ''}
         </div>
@@ -1568,8 +1644,9 @@ function renderChangesTimeline(revised, added, changedColor) {
       if (it.kind === 'revised') {
         html += `<div style="font-size:0.83rem;padding:8px 0;border-bottom:1px solid #f0f2f5;">
           <span style="background:${changedColor};color:white;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:6px;">REVISED</span>
-          <strong>Tactic ${esc(it.tactic_id)}</strong> <span style="color:var(--text-light);">(Goal ${esc(it.goal_id)})</span>
+          <strong>Tactic ${esc(it.tactic_id)}</strong> <span style="color:var(--text-light);">(Goal ${esc(it.goal_id)})</span>${it.retired ? ` <span class="retired-badge">Retired</span>` : ''}
           <div style="margin-top:3px;">${esc(it.description)}</div>
+          ${it.detail ? `<div style="color:var(--text-light);font-size:0.78rem;margin-top:5px;padding-left:10px;border-left:2px solid var(--border);">${esc(it.detail)}</div>` : ''}
           ${it.by ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:3px;">Owner: <strong>${esc(it.by)}</strong></div>` : ''}
         </div>`;
       } else {
@@ -1600,7 +1677,7 @@ function toggleChangesCard(id) {
 function objectiveRingSVG(obj) {
   const statuses = STATUS_DRAW_ORDER;
   const counts = {};
-  obj.goals.forEach(g => g.tactics.forEach(t => { counts[t.status] = (counts[t.status]||0)+1; }));
+  obj.goals.forEach(g => activeTactics(g).forEach(t => { counts[t.status] = (counts[t.status]||0)+1; }));
   const total = statuses.reduce((s, k) => s + (counts[k]||0), 0);
   const completed = counts['Completed'] || 0;
   const pct = total ? Math.round((completed/total)*100) : 0;
@@ -1660,9 +1737,12 @@ function renderObjectives() {
 // fixed 0-10 axis and rounded it, inventing numerators matching no real tactic.
 // The stored progress_score / progress_max fields are deliberately unused.
 function computeGoalProgress(goal) {
-  if (!goal.tactics || goal.tactics.length === 0) return { score: 0, max: 0, pct: 0 };
-  const completed = goal.tactics.filter(t => t.status === 'Completed').length;
-  const total = goal.tactics.length;
+  // Retired tactics leave both the numerator and the denominator: goal 3.1
+  // reads 2/3, not 2/7, once 3.1.4-3.1.7 are superseded by 3.1.8.
+  const active = activeTactics(goal);
+  if (active.length === 0) return { score: 0, max: 0, pct: 0 };
+  const completed = active.filter(t => t.status === 'Completed').length;
+  const total = active.length;
   return { score: completed, max: total, pct: (completed / total) * 100 };
 }
 
@@ -1713,12 +1793,16 @@ function renderGoal(goal, oi, gi) {
 
 function renderTactic(t, oi, gi, ti) {
   const visible = tacticVisible(t);
+  const retired = isRetired(t);
+  const retBadge = retired
+    ? ` <span class="retired-badge" title="Retired${t.retired_as_of ? ' as of ' + esc(t.retired_as_of) : ''}${t.superseded_by ? '; superseded by tactic ' + esc(t.superseded_by) : ''}. Excluded from progress counts.">RETIRED</span>`
+    : '';
   return `
-  <tr class="${visible ? '' : 'hidden'}" data-tactic>
-    <td class="tactic-id" data-label="ID">${t.tactic_id || '-'}${t.is_revised ? ` <span style="display:inline-block;background:${data.changed_color || '#a02a93'};color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="Revised — see Changes section above">REV</span>` : ''}${t.is_new_in_plan ? ` <span style="display:inline-block;background:#15803d;color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="New tactic">NEW</span>` : ''}</td>
+  <tr class="${visible ? '' : 'hidden'}${retired ? ' tactic-retired' : ''}" data-tactic>
+    <td class="tactic-id" data-label="ID">${t.tactic_id || '-'}${t.is_revised ? ` <span style="display:inline-block;background:${data.changed_color || '#a02a93'};color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="Revised — see Changes section above">REV</span>` : ''}${t.is_new_in_plan ? ` <span style="display:inline-block;background:#15803d;color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="New tactic">NEW</span>` : ''}${retBadge}</td>
     <td data-label="Tactic">${esc(t.description)}</td>
     <td data-label="Status">
-      <select class="status-select" data-status="${t.status}" onchange="updateStatus(${oi},${gi},${ti},this.value,this)">
+      <select class="status-select" data-status="${t.status}" ${retired ? 'disabled title="Retired - excluded from progress counts"' : ''} onchange="updateStatus(${oi},${gi},${ti},this.value,this)">
         <option ${t.status==='Not Started'?'selected':''}>Not Started</option>
         <option ${t.status==='In Progress - On Track'?'selected':''}>In Progress - On Track</option>
         <option ${t.status==='In Progress - Delayed'?'selected':''}>In Progress - Delayed</option>
@@ -1834,20 +1918,32 @@ function collapseAll() {
 }
 
 // ============ HELPERS ============
+// A retired tactic was superseded by a later one. It stays visible in its goal
+// for the record, but it is excluded from every count that describes how the
+// plan is progressing - rings, goal n/m, objective totals and the summary
+// cards - so a superseded tactic can neither inflate nor dilute progress.
+// It IS still eligible for the Revisions section: retirement is the revision.
+function isRetired(t) { return !!(t && t.is_retired); }
+function activeTactics(goal) { return (goal.tactics || []).filter(t => !isRetired(t)); }
+function countActiveAll() {
+  let c = 0;
+  data.objectives.forEach(o => o.goals.forEach(g => { c += activeTactics(g).length; }));
+  return c;
+}
 function countStatus(obj, status) {
   let c = 0;
-  obj.goals.forEach(g => g.tactics.forEach(t => { if (t.status === status) c++; }));
+  obj.goals.forEach(g => activeTactics(g).forEach(t => { if (t.status === status) c++; }));
   return c;
 }
 function countAllTactics(obj) {
   let c = 0;
-  obj.goals.forEach(g => c += g.tactics.length);
+  obj.goals.forEach(g => c += activeTactics(g).length);
   return c;
 }
 function getMiniPills(obj) {
   const colors = { 'Not Started': 'var(--not-started)', 'In Progress - On Track': 'var(--on-track)', 'In Progress - Delayed': 'var(--delayed)', 'Completed': 'var(--completed)' };
   let pills = '';
-  obj.goals.forEach(g => g.tactics.forEach(t => {
+  obj.goals.forEach(g => activeTactics(g).forEach(t => {
     if (!t.status) return;
     const desc = (t.description || '').replace(/"/g, '&quot;');
     const tip = `${esc(t.tactic_id)} — ${t.status}\n${desc}`;

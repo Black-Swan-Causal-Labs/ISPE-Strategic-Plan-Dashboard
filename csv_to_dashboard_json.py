@@ -159,11 +159,54 @@ def normalize_status(raw):
     if not v:
         return None, False
     if v.lower() == "changed":
-        # Per user: track separately, default the *real* status to On Track.
-        return "In Progress - On Track", True
+        # "Changed" says the tactic was revised; it says nothing about how far
+        # along it is. It used to default the status to On Track, which read as
+        # progress the committee never reported - four tactics being retired
+        # into 3.1.8 all showed as On Track. Status is now left alone (the
+        # previous value carries forward) and only is_revised is set.
+        return None, True
     key = re.sub(r"[^a-z ]", " ", v.lower())
     key = re.sub(r"\s+", " ", key).strip()
     return STATUS_MAP.get(key), False
+
+
+def is_changed_value(v):
+    """True if a status cell reports the tactic as revised rather than a status."""
+    return bool(v) and v.strip().lower() == "changed"
+
+
+# Tactics retired by a later revision. The survey has no structured "retired"
+# field - the Executive Committee said so in free text ("overcome and included
+# in the new tactic 3.1.8") - so this stays a curated list rather than
+# something inferred from prose. Retired tactics remain visible in their goal
+# but are excluded from every progress count.
+RETIRED = {
+    "3.1.4": {"as_of": "July 2026", "superseded_by": "3.1.8"},
+    "3.1.5": {"as_of": "July 2026", "superseded_by": "3.1.8"},
+    "3.1.6": {"as_of": "July 2026", "superseded_by": "3.1.8"},
+    "3.1.7": {"as_of": "July 2026", "superseded_by": "3.1.8"},
+}
+
+# Where the baked-in is_revised / is_new_in_plan flags came from. Rendered as
+# the date on those items, which was previously hardcoded in the page markup.
+TRACKER_LABEL = "March 2026"
+
+
+def cycle_date_from_filename(path):
+    """('2026-07-30', 'July 2026') from 'SP Reports 7.30.2026.csv', else (None, None).
+
+    The report export carries no dates at all, so the filename is the only
+    evidence of when a cycle was collected.
+    """
+    m = re.search(r"(\d{1,2})[.\-/](\d{1,2})[.\-/](20\d{2})", path.name)
+    if not m:
+        return None, None
+    month, day, year = (int(x) for x in m.groups())
+    try:
+        d = datetime(year, month, day)
+    except ValueError:
+        return None, None
+    return d.date().isoformat(), d.strftime("%B %Y")
 
 
 def parse_date(s):
@@ -390,6 +433,14 @@ def main():
         print("  ! no submission-date column: ties break on file order, not recency")
 
     existing_tactics, existing_goals, existing_meta = load_existing() if merge else ({}, {}, None)
+    if merge and (existing_meta or {}).get("source_file") == csv_path.name:
+        # Merging a cycle onto its own previous output compounds whatever that
+        # run got wrong - its results become this run's carried-forward base.
+        print(f"\n  !! data.json was already generated from {csv_path.name}.")
+        print("     Re-running merges this cycle onto its own output, so any")
+        print("     correction you just made will be masked by the old values.")
+        print("     Reset to the last published version first:")
+        print("         git checkout main -- data.json\n")
     if merge and existing_tactics:
         print(f"  merging onto existing data.json ({len(existing_tactics)} tactics)")
     elif merge:
@@ -406,6 +457,12 @@ def main():
     # file with no dates in it, so an existing value is preserved.
     as_of = (existing_meta or {}).get("as_of_date") or datetime.now().strftime("%B %Y")
 
+    cycle_date, cycle_label = cycle_date_from_filename(csv_path)
+    if cycle_label:
+        print(f"  cycle date from filename: {cycle_label} ({cycle_date})")
+    else:
+        print("  ! no date in the CSV filename; this cycle's items will be undated")
+
     # Build new schema by enriching the plan structure.
     out = {
         "metadata": {
@@ -413,6 +470,9 @@ def main():
             "as_of_date": as_of,
             "source": "alchemer-csv",
             "source_file": csv_path.name,
+            "cycle_date": cycle_date,
+            "cycle_label": cycle_label,
+            "tracker_label": TRACKER_LABEL,
             "generated_at": datetime.now().isoformat(timespec="seconds"),
         },
         "status_colors": {
@@ -469,20 +529,26 @@ def main():
                 explain_col = colmap["tactic_explain"].get(tid)
                 atrisk_col = colmap["tactic_atrisk"].get(tid)
 
-                # Pick status from owner committee, fall back to anyone with a recognized value.
+                # Pick status from owner committee, fall back to anyone with a
+                # recognized value. "Changed" is deliberately NOT a status
+                # value here - it is picked up separately below so it can set
+                # is_revised without disturbing the status.
                 def is_known_status(v):
                     s, _ = normalize_status(v)
-                    return s is not None or (v and v.strip().lower() == "changed")
+                    return s is not None
 
                 status_raw, status_who, status_when = pick_value(
                     responses, status_col, owner, value_filter=is_known_status,
+                )
+                changed_raw, changed_who, _ = pick_value(
+                    responses, status_col, owner, value_filter=is_changed_value,
                 )
                 # Record status cells that were filled in but matched nothing,
                 # so unrecognized answers surface instead of vanishing.
                 if status_col is not None:
                     for r in responses:
                         v = r["row"][status_col] if status_col < len(r["row"]) else ""
-                        if v and v.strip() and not is_known_status(v):
+                        if v and v.strip() and not is_known_status(v) and not is_changed_value(v):
                             unmapped.append((tid, r["committee"], v.strip()))
 
                 # is_revised / is_new_in_plan come from the plan structure
@@ -490,10 +556,16 @@ def main():
                 # are preserved regardless of what the survey says.
                 plan_revised = bool(tac.get("is_revised"))
                 plan_new = bool(tac.get("is_new_in_plan"))
-                # is_revised is taken ONLY from the plan structure (xlsx
-                # March 2026). Survey "Changed" responses do not retroactively
-                # mark a tactic as revised — the xlsx tracker is authoritative.
-                is_revised = plan_revised
+                # is_revised now comes from the plan structure OR from a
+                # "Changed" answer in this cycle. The goal-level "Have you
+                # revised Strategic Goal X.Y?" question is deliberately not
+                # used: it asks whether the goal's own wording changed, which
+                # is a different thing from a tactic being revised.
+                survey_changed = changed_raw is not None
+                is_revised = plan_revised or survey_changed
+                if survey_changed and changed_who:
+                    responders.add(changed_who)
+                    responders_all.add(changed_who)
 
                 prev = existing_tactics.get(tid) if merge else None
                 if status_raw is not None:
@@ -531,17 +603,28 @@ def main():
                 rev_who = None
                 rev_when = None
                 if is_revised:
-                    rev_desc, rev_who, rev_when = pick_value(
+                    rev_desc, rev_who, rev_explained_at = pick_value(
                         responses, explain_col, owner,
                         value_filter=lambda v: v and v.strip(),
                     )
-                    if rev_when is None:
-                        # Fall back to the status submission date.
-                        rev_when = status_when
                     if rev_who:
                         responders.add(rev_who)
+                    if survey_changed:
+                        # Revised in THIS cycle, so it is dated to this cycle.
+                        # Not status_when: that is a carried-forward date from
+                        # whenever the tactic was last reported, which for a
+                        # tactic revised today is months stale.
+                        rev_when = rev_explained_at or cycle_date
+                    else:
+                        # Flag came from the tracker, not from this survey.
+                        rev_when = rev_explained_at or status_when
+                if survey_changed:
+                    rev_desc = rev_desc or (prev or {}).get("revised_description")
+                elif prev:
+                    rev_desc = rev_desc or prev.get("revised_description")
+                    rev_when = rev_when or prev.get("revised_at")
 
-                new_goal["tactics"].append({
+                tactic_out = {
                     "tactic_id": tid,
                     "description": tac["description"],
                     "status": status,
@@ -550,19 +633,24 @@ def main():
                     "notes": notes_raw or "",
                     "last_reported_by": status_who,
                     "last_reported_at": status_when,
-                })
+                }
+                if rev_desc:
+                    tactic_out["revised_description"] = rev_desc
+                if rev_when:
+                    tactic_out["revised_at"] = rev_when
+                if tid in RETIRED:
+                    tactic_out["is_retired"] = True
+                    tactic_out["retired_as_of"] = RETIRED[tid]["as_of"]
+                    tactic_out["superseded_by"] = RETIRED[tid]["superseded_by"]
+                new_goal["tactics"].append(tactic_out)
 
             # New tactics added. The current format gives one Description
             # column per repeat slot per goal, so every non-empty slot is a
             # distinct submission rather than one-per-column.
+            # This cycle's submissions are collected FIRST so that when the same
+            # submission also exists in the published file, the version with
+            # this cycle's date wins over the older undated copy.
             seen_new = set()
-            if merge:
-                for nt in (existing_goals.get(gid) or {}).get("new_tactics", []) or []:
-                    key = (nt.get("description", "").strip(), nt.get("submitted_by") or "")
-                    if key[0] and key not in seen_new:
-                        seen_new.add(key)
-                        new_tactics_list.append(nt)
-
             for col in colmap["goal_new_tactics"].get(gid, []):
                 for r in responses:
                     v = r["row"][col] if col < len(r["row"]) else ""
@@ -584,10 +672,19 @@ def main():
                     new_tactics_list.append({
                         "description": vs,
                         "submitted_by": r["committee"],
-                        "submitted_at": r["date"].isoformat() if r["date"] else None,
+                        # No dates in the export; fall back to the cycle date so
+                        # this cycle's submissions are not rendered undated.
+                        "submitted_at": r["date"].isoformat() if r["date"] else cycle_date,
                     })
                     responders.add(r["committee"])
                     responders_all.add(r["committee"])
+
+            if merge:
+                for nt in (existing_goals.get(gid) or {}).get("new_tactics", []) or []:
+                    key = (nt.get("description", "").strip(), nt.get("submitted_by") or "")
+                    if key[0] and key not in seen_new:
+                        seen_new.add(key)
+                        new_tactics_list.append(nt)
 
             if merge:
                 # Keep committees credited on goals they reported in past cycles.
@@ -595,6 +692,10 @@ def main():
             new_goal["responding_committees"] = sorted(responders)
             new_obj["goals"].append(new_goal)
         out["objectives"].append(new_obj)
+
+    # Committees that reported in THIS cycle, as distinct from the cumulative
+    # per-goal responding_committees, which carry forward across cycles.
+    out["metadata"]["cycle_committees"] = sorted(responders_all)
 
     # ---- coverage checks before writing ----
     plan_ids = [t["tactic_id"] for o in plan["objectives"] for g in o["goals"] for t in g["tactics"]]
@@ -608,12 +709,21 @@ def main():
     n_revised = sum(1 for o in out["objectives"] for g in o["goals"] for t in g["tactics"] if t["is_revised"])
     n_new = sum(len(g["new_tactics"]) for o in out["objectives"] for g in o["goals"])
     counts = {}
+    n_retired = 0
     for o in out["objectives"]:
         for g in o["goals"]:
             for t in g["tactics"]:
+                if t.get("is_retired"):
+                    n_retired += 1
+                    continue
                 counts[t["status"]] = counts.get(t["status"], 0) + 1
+    revised_now = [t["tactic_id"] for o in out["objectives"] for g in o["goals"]
+                   for t in g["tactics"] if t.get("revised_at") == cycle_date]
 
-    print(f"  {n_tactics} tactics, {n_revised} revised, {n_new} new tactics submitted")
+    print(f"  {n_tactics} tactics ({n_tactics - n_retired} active, {n_retired} retired), "
+          f"{n_revised} revised, {n_new} new tactics submitted")
+    if revised_now:
+        print(f"  revised this cycle ({len(revised_now)}): {', '.join(sorted(revised_now))}")
     print(f"  sources: {stats['from_csv']} from this CSV, "
           f"{stats['carried_forward']} carried forward, {stats['from_plan']} from plan default")
     print("  statuses: " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items(), key=lambda kv: str(kv[0]))))
