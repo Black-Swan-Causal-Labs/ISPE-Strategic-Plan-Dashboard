@@ -19,24 +19,28 @@ python3 csv_to_dashboard_json.py
 
 | | state |
 |---|---|
-| `main` | current through 2026-07-27; pushed |
-| `new-csv-format-intake` | **unpushed working branch** — the 7.30 cycle. Five commits ahead of `main` |
-| `public-deploy` | **stale** — still the April data; not yet synced with the branch below |
+| `main` | current through 2026-08-03, includes the 7.30 cycle; pushed |
+| `new-csv-format-intake` | **merged into `main`** (2026-08-03, merge `faa9a3d`). Kept as a record; no longer the working branch |
+| `public-deploy` | **synced 2026-08-03** — the July cycle is live |
 | BSCL Pages | serving **`public-deploy`** — `admin.html` is **no longer public** (404 verified) |
 | ISPE fork | **does not exist yet** (404 re-verified 2026-08-03) |
 
 **Open items** (as of 2026-08-03):
 1. ~~Flip BSCL Pages to `public-deploy`~~ — **done.** `admin.html` now returns 404 publicly.
 2. ~~Confirm the footer copyright holder~~ — **confirmed: ISPE owns it.** The footer was already correct.
-3. ~~Absorb the new CSV format~~ — **done**, on `new-csv-format-intake`. See "The 7.30 cycle" below.
-4. **Set `as_of_date` before publishing.** It still reads **April 2026** while the data is July. It is
-   curated in the admin panel on purpose and cannot be derived from a file that carries no dates.
-5. **Review and merge `new-csv-format-intake`, then sync `public-deploy`.** Nothing is live yet.
+3. ~~Absorb the new CSV format~~ — **done**, merged to `main`. See "The 7.30 cycle" below.
+4. ~~Set `as_of_date` before publishing~~ — **done.** It reads **July 2026**. It stays curated in the admin
+   panel on purpose and cannot be derived from a file that carries no dates, so **it will need setting again
+   next cycle.**
+5. ~~Review and merge `new-csv-format-intake`, then sync `public-deploy`~~ — **done 2026-08-03.** Both
+   branches pushed; the July cycle is live on the BSCL Pages site.
 6. **The rest of the cycle is outstanding** — only 6 committees reported; the user is waiting on the others.
-7. **How ISPE receives updates — still open**, but no longer the blocker it looks like: ISPE will not fork
-   until the format work is absorbed and the new data ingested. That is now done, so this is next up. Ask for
-   push access to their fork, or propose they embed the BSCL Pages URL directly, so they are not the
-   bottleneck once they do fork.
+   When they arrive, follow "Updating the data" below — and note that step 2 (reset `data.json` first)
+   matters more than usual now, because a second partial cycle merges onto this one.
+7. **How ISPE receives updates — still open, and now the top item.** It was gated on absorbing the format
+   work and ingesting the new data; that is done and live, so nothing is blocking it. Ask for push access to
+   their fork, or propose they embed the BSCL Pages URL directly, so they are not the bottleneck once they
+   do fork. Settle it **before** they fork — it is much harder to change afterwards.
 
 ## The 7.30 cycle (what just happened)
 
@@ -76,8 +80,9 @@ intended to be embedded on the ISPE website as an `<iframe>`. No backend — eve
   - It has its **own separate allowlist `.gitignore`** — different from `main`'s. Anything new that
     `index.html` depends on must be allowlisted there too, or it silently won't ship. `fonts/` was added
     on 2026-07-27 for exactly this reason.
-  - The branch is maintained by **copying `index.html` from `main`**, not by merging. **As of 2026-08-03 it
-    is behind**: the 7.30 cycle lives on `new-csv-format-intake` and has not been merged or synced across.
+  - The branch is maintained by **copying `index.html` from `main`**, not by merging. **Synced 2026-08-03**
+    (`e13de00`): `index.html` and `data.json` were copied verbatim from `main` and verified identical to it.
+    Sync it again after every `data.json` regeneration, or the public site keeps showing the last cycle.
 
 ## Live URLs & deployment state (Pages verified 2026-07-27; fork re-checked 2026-08-03)
 - **Black Swan (live now):** https://black-swan-causal-labs.github.io/ISPE-Strategic-Plan-Dashboard/
@@ -125,7 +130,7 @@ The script prints a report every run: value sources, status counts, who reported
 recognized but deliberately not consumed, and any status cell that matched no known value. **Read it.** It is
 the only thing standing between a malformed cycle and a plausible-looking wrong dashboard.
 
-## Current state (as of this handoff, on `new-csv-format-intake`)
+## Current state (as of this handoff, on `main` — and live on `public-deploy`)
 - **99 tactics, of which 95 are active and 4 are retired.** Active split: 43 On Track, 21 Not Started,
   24 Completed, 7 Delayed.
 - **Retired = 3.1.4, 3.1.5, 3.1.6, 3.1.7**, superseded by a proposed tactic 3.1.8 that **does not exist in
@@ -137,9 +142,9 @@ the only thing standing between a malformed cycle and a plausible-looking wrong 
 - **Goal/objective progress is a plain count over active tactics** — goal 3.1 reads `3/3`, objective 3 reads
   `5/9`. The old `x/10` scale is gone. Stored `progress_score` fields are intentionally unused.
 - **At Risk = 28** (21 Not Started + 7 Delayed, retired excluded) — **admin view only**.
-- Header "As of …" comes from `metadata.as_of_date` (admin picker) and **still says April 2026**.
-  The line under it — "Survey data through July 2026 · 6 committee responses this cycle" — comes from
-  `metadata.cycle_label` / `cycle_committees` and is correct.
+- Header "As of …" comes from `metadata.as_of_date` (admin picker) and reads **July 2026**. The line under
+  it — "Survey data through July 2026 · 6 committee responses this cycle" — comes from
+  `metadata.cycle_label` / `cycle_committees`. Both are correct and agree.
 
 ## Key UI components
 - **Summary cards** — the 4 status cards partition the **95 active** tactics; **"Revised / New*"** is a
