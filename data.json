@@ -7,7 +7,8 @@
     "organization": "ISPE - International Society for Pharmacoepidemiology",
     "progress_scale": "0-10",
     "source": "alchemer-csv",
-    "generated_at": "2026-04-07T20:31:41"
+    "source_file": "SP Reports 7.30.2026.csv",
+    "generated_at": "2026-08-03T07:07:59"
   },
   "status_colors": {
     "Not Started": "#0f9ed4",
@@ -81,10 +82,10 @@
           "goal_id": "1.2",
           "description": "Goal 1.2: Throughout 2025-2029, >50% of plenaries, symposia/workshops at each meeting, webinars, and engagements with collaborating organizations and at least two pre-conference courses per year are related to emerging and innovative topics and/or strategic efforts",
           "responsible_committee": "Education",
-          "progress_score": 5,
+          "progress_score": 7,
           "progress_max": 10,
-          "last_updated": "2026-02-23T17:42:04",
-          "last_reported_by": "Public Policy",
+          "last_updated": null,
+          "last_reported_by": "Education",
           "tactics": [
             {
               "tactic_id": "1.2.1",
@@ -104,7 +105,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Education",
-              "last_reported_at": "2026-03-02T11:35:08"
+              "last_reported_at": null
             },
             {
               "tactic_id": "1.2.3",
@@ -114,7 +115,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Education",
-              "last_reported_at": "2026-03-02T11:35:08"
+              "last_reported_at": null
             },
             {
               "tactic_id": "1.2.4",
@@ -124,7 +125,7 @@
               "is_new_in_plan": true,
               "notes": "",
               "last_reported_by": "Education",
-              "last_reported_at": "2026-03-02T11:35:08"
+              "last_reported_at": null
             },
             {
               "tactic_id": "1.2.5",
@@ -134,7 +135,7 @@
               "is_new_in_plan": true,
               "notes": "",
               "last_reported_by": "Education",
-              "last_reported_at": "2026-03-02T11:35:08"
+              "last_reported_at": null
             }
           ],
           "new_tactics": [
@@ -159,10 +160,10 @@
           "goal_id": "2.1",
           "description": "Goal 2.1: By 2025, establish a communication plan which emphasizes publicizing achievements aligned with this strategic plan, internal and external to ISPE",
           "responsible_committee": "History & Archives",
-          "progress_score": 6,
+          "progress_score": 7,
           "progress_max": 10,
           "last_updated": null,
-          "last_reported_by": null,
+          "last_reported_by": "History & Archives",
           "tactics": [
             {
               "tactic_id": "2.1.1",
@@ -177,32 +178,32 @@
             {
               "tactic_id": "2.1.2",
               "description": "Learn from the experience of the History and Archives Committee about how they have highlighted past achievements and how that can be used going forward for this plan",
-              "status": "In Progress - On Track",
+              "status": "Completed",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "History & Archives",
-              "last_reported_at": "2026-02-19T10:51:44"
+              "last_reported_at": null
             },
             {
               "tactic_id": "2.1.3",
               "description": "Provide annual updates to membership through presentations at the annual and regional ISPE meetings (via Presidential address or organized symposia). These presentations can highlight major achievements from the strategic plan",
-              "status": "In Progress - On Track",
+              "status": "Completed",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "History & Archives",
-              "last_reported_at": "2026-02-19T10:51:44"
+              "last_reported_at": null
             },
             {
               "tactic_id": "2.1.4",
               "description": "Leverage existing strategic partnerships to disseminate achievements related to this strategic plan (e.g., through conference presentatins/symposia, joint publications, etc.)",
-              "status": "In Progress - On Track",
+              "status": "In Progress - Delayed",
               "is_revised": false,
               "is_new_in_plan": false,
-              "notes": "",
+              "notes": "The tactic is not at risk. We have brainstormed ways to engage external partners in promoting achievements from strategic plan. One mechanism is a paper about advocacy in pharmacoepi, coauthored by Grammati Sarri and Mehmet Burcu and others. More time is needed to explore how and where to distribute these accomplishments among strategic partner organizations. ",
               "last_reported_by": "History & Archives",
-              "last_reported_at": "2026-02-19T10:51:44"
+              "last_reported_at": null
             },
             {
               "tactic_id": "2.1.5",
@@ -210,19 +211,19 @@
               "status": "In Progress - Delayed",
               "is_revised": false,
               "is_new_in_plan": false,
-              "notes": "The tactic is not at risk. We have consulted with our Executive Sponsor and PDS and have a good idea about what kind of publications would be needed. There are currently three draft papers in the works, but they need to undergo major refinement before they would be ready for submission.",
+              "notes": "The tactic is not at risk. We have confirmed PDS' interest in publishing such information. We have obtained drafts of ISPE history manuscripts. We have reached out to student groups to assess interest in refining these into shorter components for publication. ",
               "last_reported_by": "History & Archives",
-              "last_reported_at": "2026-02-19T10:51:44"
+              "last_reported_at": null
             },
             {
               "tactic_id": "2.1.6",
               "description": "Plan bi-annual LinkedIn spotlights related to achievements for the strategic plan",
-              "status": "In Progress - On Track",
+              "status": "Completed",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "History & Archives",
-              "last_reported_at": "2026-02-19T10:51:44"
+              "last_reported_at": null
             }
           ],
           "new_tactics": [],
@@ -234,10 +235,10 @@
           "goal_id": "2.2",
           "description": "Goal 2.2: By 2029, develop at least 5 position statements from ISPE showcasing expertise and innovation in pharmacoepidemiology",
           "responsible_committee": "Publications & Communications",
-          "progress_score": 6,
+          "progress_score": 5,
           "progress_max": 10,
-          "last_updated": "2026-02-19T10:51:44",
-          "last_reported_by": "History & Archives",
+          "last_updated": null,
+          "last_reported_by": null,
           "tactics": [
             {
               "tactic_id": "2.2.1",
@@ -306,10 +307,10 @@
           "goal_id": "3.1",
           "description": "Goal 3.1: By 2026, complete a review of the organization structure and activities of ISPE; by 2028, implement any needed modifications to enhance future opportunities to achieve mission and vision",
           "responsible_committee": "Executive",
-          "progress_score": 4,
+          "progress_score": 9,
           "progress_max": 10,
           "last_updated": null,
-          "last_reported_by": null,
+          "last_reported_by": "Executive",
           "tactics": [
             {
               "tactic_id": "3.1.1",
@@ -334,55 +335,61 @@
             {
               "tactic_id": "3.1.3",
               "description": "Develop a more detailed organizational chart, including communication pathways between groups",
-              "status": "In Progress - Delayed",
+              "status": "Completed",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Executive",
-              "last_reported_at": "2026-02-27T08:44:26"
+              "last_reported_at": null
             },
             {
               "tactic_id": "3.1.4",
               "description": "Identify gaps (gaps and prioritization analysis), via survey that all community leaders will be invited to contribute; prioritize gaps based on finalized list of gaps.",
-              "status": "Not Started",
+              "status": "In Progress - On Track",
               "is_revised": true,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Executive",
-              "last_reported_at": "2026-02-27T08:44:26"
+              "last_reported_at": null
             },
             {
               "tactic_id": "3.1.5",
               "description": "Finalize list of recommended changes and develop outcome indicators for each change",
-              "status": "Not Started",
+              "status": "In Progress - On Track",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Executive",
-              "last_reported_at": "2026-02-27T08:44:26"
+              "last_reported_at": null
             },
             {
               "tactic_id": "3.1.6",
               "description": "Develop a timeline for implementation",
-              "status": "Not Started",
+              "status": "In Progress - On Track",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Executive",
-              "last_reported_at": "2026-02-27T08:44:26"
+              "last_reported_at": null
             },
             {
               "tactic_id": "3.1.7",
               "description": "Successfully implement the needed modifications of the organizational structure",
-              "status": "Not Started",
+              "status": "In Progress - On Track",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Executive",
-              "last_reported_at": "2026-02-27T08:44:26"
+              "last_reported_at": null
             }
           ],
-          "new_tactics": [],
+          "new_tactics": [
+            {
+              "description": "The new tactic proposed to replace tactics 3.1.4-3.1.7.  The management company in collaboration with the Executive committee and ISPE communities identifies gaps on an ongoing basis. Suitable solutions are developed and implemented ad hoc involving the interested parties in ISPE. All ISPE community leaders have the opportunity to report gaps or any other needs through a dedicated form.",
+              "submitted_by": "Executive",
+              "submitted_at": null
+            }
+          ],
           "responding_committees": [
             "Executive"
           ]
@@ -391,10 +398,10 @@
           "goal_id": "3.2",
           "description": "Goal 3.2: Revised: Implement onboarding for members and leaders to facilitate clear understanding of expectations, provide transparency and information flow, and encourage engagement aligned with ISPE mission, vision, and strategic plan",
           "responsible_committee": "Strategic Planning",
-          "progress_score": 4,
+          "progress_score": 8,
           "progress_max": 10,
-          "last_updated": "2026-02-27T08:44:26",
-          "last_reported_by": "Executive",
+          "last_updated": null,
+          "last_reported_by": "Strategic Planning",
           "tactics": [
             {
               "tactic_id": "3.2.1",
@@ -414,7 +421,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "3.2.3",
@@ -424,7 +431,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "3.2.4",
@@ -434,7 +441,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "3.2.5",
@@ -444,7 +451,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "3.2.6",
@@ -548,10 +555,10 @@
           "goal_id": "4.2",
           "description": "Goal 4.2: By 2026, improve ISPE technology resources and practices to streamline communication and procedures",
           "responsible_committee": "Executive/Impact",
-          "progress_score": 3,
+          "progress_score": 4,
           "progress_max": 10,
-          "last_updated": "2026-03-06T16:19:23",
-          "last_reported_by": "Development",
+          "last_updated": null,
+          "last_reported_by": null,
           "tactics": [
             {
               "tactic_id": "4.2.1",
@@ -616,10 +623,10 @@
           "goal_id": "5.1",
           "description": "Goal 5.1: Revised Goal: Intentionally incorporate capacity-building within and across ISPE communities, and into all ISPE strategic activities",
           "responsible_committee": "Global Development / Strategic Planning",
-          "progress_score": 5,
+          "progress_score": 6,
           "progress_max": 10,
           "last_updated": null,
-          "last_reported_by": null,
+          "last_reported_by": "Strategic Planning",
           "tactics": [
             {
               "tactic_id": "5.1.1",
@@ -678,8 +685,8 @@
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
-              "last_reported_by": "Global Development/Strategic Planning",
-              "last_reported_at": "2026-03-09T20:35:25"
+              "last_reported_by": "Strategic Planning",
+              "last_reported_at": null
             },
             {
               "tactic_id": "5.1.7",
@@ -688,23 +695,24 @@
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
-              "last_reported_by": "Global Development/Strategic Planning",
-              "last_reported_at": "2026-03-09T20:35:25"
+              "last_reported_by": "Strategic Planning",
+              "last_reported_at": null
             }
           ],
           "new_tactics": [],
           "responding_committees": [
-            "Global Development/Strategic Planning"
+            "Global Development/Strategic Planning",
+            "Strategic Planning"
           ]
         },
         {
           "goal_id": "5.2",
           "description": "Goal 5.2: By 2026, establish virtual meeting engagement practices for conferences and ISPE community meetings",
           "responsible_committee": "Sustainability",
-          "progress_score": 6,
+          "progress_score": 7,
           "progress_max": 10,
           "last_updated": null,
-          "last_reported_by": null,
+          "last_reported_by": "Sustainability",
           "tactics": [
             {
               "tactic_id": "5.2.1",
@@ -714,7 +722,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Sustainability",
-              "last_reported_at": "2026-03-04T05:06:46"
+              "last_reported_at": null
             },
             {
               "tactic_id": "5.2.2",
@@ -724,7 +732,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Sustainability",
-              "last_reported_at": "2026-03-04T05:06:46"
+              "last_reported_at": null
             },
             {
               "tactic_id": "5.2.3",
@@ -734,7 +742,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Sustainability",
-              "last_reported_at": "2026-03-04T05:06:46"
+              "last_reported_at": null
             },
             {
               "tactic_id": "5.2.4",
@@ -742,9 +750,9 @@
               "status": "In Progress - Delayed",
               "is_revised": false,
               "is_new_in_plan": false,
-              "notes": "The tactic is not at risk, next step is to create an online agenda for all virtual ISPE activities, in collaboration with the Education Committee. ",
+              "notes": "Tactic is not at risk",
               "last_reported_by": "Sustainability",
-              "last_reported_at": "2026-03-04T05:06:46"
+              "last_reported_at": null
             },
             {
               "tactic_id": "5.2.5",
@@ -754,7 +762,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Sustainability",
-              "last_reported_at": "2026-03-04T05:06:46"
+              "last_reported_at": null
             }
           ],
           "new_tactics": [],
@@ -768,8 +776,8 @@
           "responsible_committee": "Fellowship & Awards",
           "progress_score": 5,
           "progress_max": 10,
-          "last_updated": "2026-03-09T20:35:25",
-          "last_reported_by": "Global Development/Strategic Planning",
+          "last_updated": null,
+          "last_reported_by": null,
           "tactics": [
             {
               "tactic_id": "5.3.1",
@@ -838,10 +846,10 @@
           "goal_id": "6.1",
           "description": "Goal 6.1: Revised Goal: Establish a FISPE pledge framework that encourages engagement and deepens commitment to advancing society's mission, vision, and values",
           "responsible_committee": "Strategic Planning",
-          "progress_score": 6,
+          "progress_score": 8,
           "progress_max": 10,
           "last_updated": null,
-          "last_reported_by": null,
+          "last_reported_by": "Strategic Planning",
           "tactics": [
             {
               "tactic_id": "6.1.1",
@@ -856,12 +864,12 @@
             {
               "tactic_id": "6.1.2",
               "description": "Survey FISPEs to collect feedback on the proposed list (see Tactic 6.1.1) and finalize list of opportunities for engagement",
-              "status": "In Progress - On Track",
+              "status": "Completed",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "6.1.3",
@@ -871,7 +879,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "6.1.4",
@@ -881,7 +889,7 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "6.1.5",
@@ -891,27 +899,27 @@
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "6.1.6",
               "description": "Create a standardized process for streamlined communication of need for FISPE engagement from ISPE communities",
-              "status": "Not Started",
+              "status": "In Progress - On Track",
               "is_revised": false,
               "is_new_in_plan": true,
               "notes": "Not started, but not at risk. Still within proposed timeline.",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "6.1.7",
               "description": "Evaluate the implementation of the FISPE engagement plan",
-              "status": "Not Started",
+              "status": "In Progress - On Track",
               "is_revised": true,
               "is_new_in_plan": false,
               "notes": "Not started, but not at risk. Still within proposed timeline.",
               "last_reported_by": "Strategic Planning",
-              "last_reported_at": "2026-02-27T06:55:20"
+              "last_reported_at": null
             },
             {
               "tactic_id": "6.1.8",
@@ -933,10 +941,10 @@
           "goal_id": "6.2",
           "description": "Goal 6.2: By 2025, identify opportunities for increasing engagement in ISPE by career stage",
           "responsible_committee": "Membership",
-          "progress_score": 6,
+          "progress_score": 8,
           "progress_max": 10,
-          "last_updated": "2026-02-27T06:55:20",
-          "last_reported_by": "Strategic Planning",
+          "last_updated": null,
+          "last_reported_by": null,
           "tactics": [
             {
               "tactic_id": "6.2.1",
@@ -1015,10 +1023,10 @@
           "goal_id": "7.1",
           "description": "Goal 7.1: By 2025, update strategy for ISPE meetings: (a) Modify Annual Meeting location parameters; (b) Designate funding and calendarization for regional meetings; (c) Designate track at Annual Meeting for regional interests",
           "responsible_committee": "Scientific Meetings Oversight",
-          "progress_score": 4,
+          "progress_score": 5,
           "progress_max": 10,
           "last_updated": null,
-          "last_reported_by": null,
+          "last_reported_by": "Scientific Meetings Oversight",
           "tactics": [
             {
               "tactic_id": "7.1.1",
@@ -1033,12 +1041,12 @@
             {
               "tactic_id": "7.1.2",
               "description": "Designate a track for regional interests at ISPE annual meeting",
-              "status": "In Progress - On Track",
+              "status": "Completed",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
-              "last_reported_by": "Meetings Oversight",
-              "last_reported_at": "2026-03-06T07:24:26"
+              "last_reported_by": "Scientific Meetings Oversight",
+              "last_reported_at": null
             },
             {
               "tactic_id": "7.1.3",
@@ -1053,57 +1061,58 @@
             {
               "tactic_id": "7.1.4",
               "description": "Collaborate with regional pharmaceutical societies, universities, and governmental health bodies to expand outreach and ensure local relevance",
-              "status": "Not Started",
+              "status": "In Progress - On Track",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "The SMOC is relatively new and still setting up all working groups and work procedures. The working group is still to be set up, but will be established by mid 2026. This tactic is not considered a risk as the deadline is December 2027",
-              "last_reported_by": "Meetings Oversight",
-              "last_reported_at": "2026-03-06T07:24:26"
+              "last_reported_by": "Scientific Meetings Oversight",
+              "last_reported_at": null
             },
             {
               "tactic_id": "7.1.5",
               "description": "Enhance assessment at the end of each regional meeting to guarantee success and avoid greater financial loss and share information with Board/Exec. Propose a standardized evaluation framework to be used.",
-              "status": "Not Started",
+              "status": "In Progress - On Track",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "The SMOC is relatively new and still setting up all working groups and work procedures. Setting up of this WG will be prioritised given that the timeline for completion is  December 2026",
-              "last_reported_by": "Meetings Oversight",
-              "last_reported_at": "2026-03-06T07:24:26"
+              "last_reported_by": "Scientific Meetings Oversight",
+              "last_reported_at": null
             },
             {
               "tactic_id": "7.1.6",
               "description": "Compare ISPE's regional meetings with similar organizations (e.g., ISPOR, ISOP) to identify opportunities for improvement and Innovation with an annual cadence and feedback to the Board/Exec",
-              "status": "Not Started",
+              "status": "In Progress - On Track",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "The SMOC is relatively new and still setting up all working groups and work procedures. The working group is still to be set up, but will be established by mid 2026. This tactic is not considered a risk as the deadline is December 2027",
-              "last_reported_by": "Meetings Oversight",
-              "last_reported_at": "2026-03-06T07:24:26"
+              "last_reported_by": "Scientific Meetings Oversight",
+              "last_reported_at": null
             },
             {
               "tactic_id": "7.1.7",
               "description": "Explore opportunities to offer CE credits or certifications for attendees, making regional meetings more attractive to healthcare professionals",
-              "status": "In Progress - Delayed",
+              "status": "In Progress - On Track",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "The SMOC is relatively new and still setting up all working groups and work procedures. This task is not yet completed, but work has been initiated to inventories the current status in collaboration with the EC, RIGs, GCD, FC and Education Committee",
-              "last_reported_by": "Meetings Oversight",
-              "last_reported_at": "2026-03-06T07:24:26"
+              "last_reported_by": "Scientific Meetings Oversight",
+              "last_reported_at": null
             }
           ],
           "new_tactics": [],
           "responding_committees": [
-            "Meetings Oversight"
+            "Meetings Oversight",
+            "Scientific Meetings Oversight"
           ]
         },
         {
           "goal_id": "7.2",
           "description": "Goal 7.2: By 2029, increase (a) Number of new members who do not have degree in epidemiology, (b) Number of members who study medical interventions/products other than medicines, and (c) Number of members outside of North America or Europe by at least 20% each",
           "responsible_committee": "Development",
-          "progress_score": 4,
+          "progress_score": 0,
           "progress_max": 10,
-          "last_updated": "2026-03-06T07:24:26",
-          "last_reported_by": "Meetings Oversight",
+          "last_updated": null,
+          "last_reported_by": null,
           "tactics": [
             {
               "tactic_id": "7.2.1",
@@ -1239,8 +1248,8 @@
           "responsible_committee": "Executive",
           "progress_score": 5,
           "progress_max": 10,
-          "last_updated": "2026-02-23T17:42:04",
-          "last_reported_by": "Public Policy",
+          "last_updated": null,
+          "last_reported_by": null,
           "tactics": [
             {
               "tactic_id": "8.2.1",
