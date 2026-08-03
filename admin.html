@@ -936,10 +936,10 @@
     </div>
   </div>
 
-  <!-- Changes & New Tactics (separate from the 4 status enums) -->
+  <!-- Revisions & New Tactics (separate from the 4 status enums) -->
   <div id="changesSection"></div>
 
-  <!-- Completed Tactics (collapsible, like Changes & New Tactics) -->
+  <!-- Completed Tactics (collapsible, like Revisions & New Tactics) -->
   <div id="completedSection"></div>
 
   <!-- Objectives -->
@@ -1454,7 +1454,7 @@ function renderChanges() {
     <div class="hover-lift" style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid var(--border);overflow:hidden;margin-bottom:24px;">
       <div style="display:flex;align-items:center;gap:12px;padding:14px 22px;user-select:none;flex-wrap:wrap;">
         <span id="changes-chev" onclick="toggleChangesAll()" style="display:inline-block;transition:transform 0.2s;color:${changedColor};font-size:0.8rem;cursor:pointer;${changesOpen?'transform:rotate(90deg);':''}">&#9654;</span>
-        <div onclick="toggleChangesAll()" style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${changedColor};cursor:pointer;flex:1;">Changes &amp; New Tactics</div>
+        <div onclick="toggleChangesAll()" style="font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${changedColor};cursor:pointer;flex:1;">Revisions &amp; New Tactics</div>
         <div style="background:${changedColor};color:white;font-size:0.7rem;font-weight:700;padding:2px 9px;border-radius:10px;">${total}</div>
         <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;font-size:0.72rem;">
           <button onclick="event.stopPropagation();setChangesView('list')" style="padding:4px 12px;border:none;background:${changesView==='list'?changedColor:'white'};color:${changesView==='list'?'white':'var(--text-light)'};cursor:pointer;font-weight:600;">List</button>
