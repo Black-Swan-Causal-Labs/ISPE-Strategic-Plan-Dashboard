@@ -38,6 +38,7 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
 
 ## Summary cards / "Revised / New"
 - The **four status cards partition all 99** (Not Started + On Track + Delayed + Completed = Total).
+  *(Since 2026-08-03 they partition the **active** tactics — 95 of 99, with four retired. See below.)*
 - **"Revised / New" is a separate overlay tag**, not a status — a revised tactic still has one of the four
   statuses and is *also* counted here, plus survey-submitted new tactics — so it is not part of the total.
   Marked with a `*` and an explanatory footnote so the numbers "not adding up" is understood, not confusing.
@@ -61,6 +62,8 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
 - **Recurring updates are still unproven** — see STATUS.md "Open questions." Decision pending on whether to
   make "Revised / New" auto-refresh from the survey's "Changed" responses vs. keep it a manual plan-structure
   edit each cycle. Deferred at ISPE's request until the first real re-upload shows how the update behaves.
+  *(Resolved 2026-08-03: the re-upload arrived in a different format and "Revised / New" now refreshes from
+  the survey. See the 2026-08-03 section at the bottom.)*
 
 ## Mobile
 - Responsive CSS extended (stack search/summary, wrap at-risk rows, reflow summary note, tighten collapsible
@@ -98,7 +101,8 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
 - Goal progress previously showed `x/10` derived from `round(pct/100 * 10)`. Goal 3.1 (2 of 7 complete)
   displayed **"3/10"** — a numerator matching no actual tactic. Now shows **`2/7`** plus the percentage.
 - Objective rings likewise show the composite fraction (objective 3 = **4/13**). The underlying ring
-  percentage was already computed this way; only the label changed.
+  percentage was already computed this way; only the label changed. *(Both denominators now exclude retired
+  tactics: goal 3.1 reads 3/3 and objective 3 reads 5/9 as of 2026-08-03.)*
 - **The stored `progress_score` / `progress_max` fields in `data.json` are deliberately unused.** All 17
   goals' stored scores disagree with the computed values (some wildly: goal 2.2 stored 6, computes 0).
   Progress is derived from tactic statuses so it always reconciles with the rows beneath it. Revisit only
@@ -223,3 +227,112 @@ _Why the dashboard is built the way it is. Newest context at the bottom. See `ST
 - The contact line moved out of the footer to sit under the last objective.
 - Design-detector waivers live in `.impeccable/config.json` (not tracked — the allowlist excludes it), each
   with a recorded reason.
+
+---
+
+# 2026-08-03 — New CSV format, partial cycles, retirement
+
+The trial re-upload the earlier notes were waiting on arrived as `SP Reports 7.30.2026.csv`. It did not
+behave like a refresh; it behaved like a different instrument. Everything below follows from that.
+
+## The export changed shape, and the old shape is not coming back
+- It is now a **report export, not the raw Alchemer response dump**. Committee is column 0; the entire
+  `Response ID` / `Time Started` / `Date Submitted` / `Status` block is gone. 540 columns against 404, and
+  6 responses against 13.
+- Confirmed with the user that **this is the format going forward**, so the script targets it rather than
+  treating it as an exception.
+- **Run unchanged it would not have crashed — it would have been silently wrong.** `DATE_COL = 2` pointed at
+  a goal answer and `COMMITTEE_COL = 21` at an at-risk text box, so every answer failed committee matching,
+  fell through to the "any committee" pool, and was attributed by file order. Plausible-looking garbage.
+  Columns are now located by header name, which also keeps the old format parsing.
+- **Headers are full of non-breaking spaces.** `Tactic\xa05.3.5:` defeated `^Tactic (\d+\.\d+\.\d+)` and
+  dropped that tactic from every run. All header text is normalized before matching; coverage went 98 → 99.
+- **New tactics were being discarded entirely.** The gate now reads `new tactic(s)`, which the old
+  `"new tactics"` test missed, so `NEWTAC` matched **0 of 18** columns. One real proposal was disappearing.
+- Incidental: the report export appears to carry **no PII** (no names, emails or IPs). The allowlist
+  `.gitignore` still keeps it untracked; that is not worth relaxing for one file's convenience.
+
+## Merge, not rebuild
+- **Each cycle is partial.** Six committees reported here and the user confirmed the rest are still
+  outstanding. The script previously rebuilt from `DEFAULT_DATA` every run, so an unreported tactic fell back
+  to the plan's baked-in **March 2026** status — a partial CSV would have rolled 63 tactics backwards.
+- Values now resolve **CSV → existing `data.json` → plan default**, with `--no-merge` for the old behaviour.
+- Worth recording because merge looked like a no-op on this cycle: statuses came out identical either way,
+  since the unreported tactics happened to already sit at their plan defaults. It was not a no-op — a rebuild
+  would have wiped **15 notes, 61 provenance records, 2 previously submitted new tactics**, and reset
+  `as_of_date`. It will matter for statuses too once more committees report.
+- **`as_of_date` is preserved, not regenerated.** It is curated in the admin panel and cannot be derived from
+  a file with no dates. It was being stamped with `datetime.now()`, which silently overwrote the curated value.
+- **Re-running a cycle merges it onto its own output**, so a correction made between runs is masked by the
+  previous run's values carried forward. This bit during development. The script now detects it
+  (`metadata.source_file` matches the input) and tells you to `git checkout main -- data.json` first.
+
+## "Changed" means revised, not on track
+- A `Changed` answer used to set the status to **In Progress - On Track**. That turned four tactics being
+  *retired* into four tactics reported as progressing — 3.1.4 through 3.1.7 all moved Not Started → On Track
+  on the first ingest, and the cycle looked like 17 status changes when only 12 were real.
+- **`Changed` now sets `is_revised` and leaves the status alone**, so the previous value carries forward.
+  It answers "did this change?", not "how far along is it?", and inventing a status from it overstates
+  progress in exactly the cases where work is being abandoned.
+
+## Revisions come from the tactic question, not the goal question
+- `is_revised` had been sourced **only** from the March 2026 xlsx tracker, so five tactics reported as
+  `Changed` in this cycle showed as revised nowhere. It now comes from the tracker **or** a survey `Changed`.
+- The new format also has a goal-level **"Have you revised Strategic Goal X.Y?"**. It is deliberately
+  **not** wired in. It asks whether the *goal's own wording* changed, which is a different question:
+  Executive answered **No** for goal 3.1 while marking four of its tactics `Changed`. Driving a tactic-level
+  overlay from a goal-level question would have contradicted the committee's own answers.
+
+## Retired tactics leave every progress count
+- The Executive Committee's new tactic **replaces 3.1.4–3.1.7** ("overcome and included in the new tactic
+  3.1.8"). Neither the plan nor the dashboard had any concept of a superseded tactic, so those four kept
+  diluting goal 3.1's denominator while representing work that will never be done.
+- **Retired tactics are excluded from everything that describes progress**: rings, goal `n/m`, objective
+  totals, all four status cards, the Revised/New card, the mini pills, and the admin at-risk panel. Goal 3.1
+  reads **3/3** and objective 3 **5/9**. Confirmed with the user that the cards move too, so every figure on
+  the page describes the same 95 active tactics rather than the cards and the rings disagreeing.
+- They **stay listed** in their goal with a `RETIRED` badge and a dagger pointing at a note under the
+  tracker. Removing them would erase the record of a decision; the point is that they are visible *and*
+  uncounted. The admin status select is disabled for them.
+- **Retirement is a curated list** (`RETIRED` in `csv_to_dashboard_json.py`), not inferred. The survey has no
+  structured retirement field — the committee said it in free text — and guessing retirement from prose
+  would be the kind of silent wrongness this whole section exists to avoid. Future retirements mean editing
+  that dict, which is a reason to ask ISPE for a real field if this recurs.
+- Known asymmetry, chosen deliberately: the **Revised/New card reads 17** (retired excluded, so all cards
+  describe the same population) while the **section badge reads 21** (retired included, because being
+  retired *is* the revision being documented). They will not match.
+
+## Dates are data, not markup
+- The Revisions section had `when: 'March 2026'` **hardcoded as a string literal** in both pages. No data
+  file could ever move it. It now reads `revised_at` per tactic and falls back to `metadata.tracker_label`.
+- **The export carries no dates at all**, so the cycle date is derived from the **filename**
+  (`SP Reports 7.30.2026.csv` → July 2026). It is the only evidence of when a cycle was collected. This
+  cycle's revisions and new tactic are stamped July 2026 and sort to the top of the timeline.
+- **The header stamp was getting staler with every fresh ingest.** "Survey data through …" took the max of
+  `last_reported_at`; since nothing from the new format carries a date, the only dates left were
+  carried-forward March ones. It now reads `metadata.cycle_label`, plus `cycle_committees` for a
+  this-cycle-only response count rather than the cumulative one.
+- Ask ISPE to **restore a submission date to the export**. Without it there is no way to order two responses
+  from the same committee, and provenance is committee-based rather than recency-based.
+
+## Section renamed
+- **"Changes & New Tactics" → "Revisions & New Tactics."** "Changes" was vague and the section only ever
+  contained revisions and new tactics.
+
+## Still open
+- **Blank ≠ Not Started.** `Not started` appears **zero** times in the new export against 29 in the old one;
+  unreported tactics are simply blank. Blank now means one of three things — not started, not reported this
+  cycle, or not this committee's goal — and the file does not distinguish them.
+- **No mapping rule for junk status values.** Three `N/A` cells and two respondents typing a sentence into a
+  status dropdown are reported by the script rather than dropped in silence, but nothing maps them. All five
+  happened to carry forward correctly this cycle; that was luck.
+- **Goal ownership is now declared in the survey** (17 "please select the strategic goal(s) your committee is
+  leading" columns) and is better data than `committee_matches()`'s fuzzy string comparison. Not adopted.
+- **At-risk is no longer strictly per-tactic** — 81 columns for 99 tactics, some goals asking once for a
+  block of three. The parser pairs a follow-up to the most recent tactic, so a block answer lands on the last
+  tactic and the earlier ones read empty. Also, the at-risk text is now mostly *negations* ("The tactic is
+  not at risk…"), so non-empty must never be read as "at risk".
+- **New-tactic Budget / Timeline / Community Involvement have no home in `data.json`.** Budget in particular
+  should probably never render on a public dashboard. The columns are recognized and reported, not consumed.
+- **Tactic 3.1.8 does not exist yet.** It is referenced as the successor to four retired tactics but is not
+  in the plan; goal 3.1 still runs .1 to .7. Adding it means editing `DEFAULT_DATA` in both HTML files.
