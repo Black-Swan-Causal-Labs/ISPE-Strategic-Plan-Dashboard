@@ -141,7 +141,10 @@ the only thing standing between a malformed cycle and a plausible-looking wrong 
   retired *is* the revision. See DECISIONS if this looks like a bug.
 - **Goal/objective progress is a plain count over active tactics** — goal 3.1 reads `3/3`, objective 3 reads
   `5/9`. The old `x/10` scale is gone. Stored `progress_score` fields are intentionally unused.
-- **At Risk = 28** (21 Not Started + 7 Delayed, retired excluded) — **admin view only**.
+- **At Risk = 28** (21 Not Started + 7 Delayed, retired excluded) — **admin view only**. Of those, only
+  **3 were reconfirmed in the July cycle**; **24 are carried forward** from Feb/Mar 2026 and **1 (5.3.5) has
+  never been reported at all**. Down from 37 in April, but 4 of that drop is the retirement of 3.1.4–3.1.7
+  rather than progress. The panel now marks this per row — see "At Risk" under Key UI components.
 - Header "As of …" comes from `metadata.as_of_date` (admin picker) and reads **July 2026**. The line under
   it — "Survey data through July 2026 · 6 committee responses this cycle" — comes from
   `metadata.cycle_label` / `cycle_committees`. Both are correct and agree.
@@ -159,6 +162,16 @@ the only thing standing between a malformed cycle and a plausible-looking wrong 
   the only date is the survey-report date, which clusters into ~2 months — see DECISIONS).
 - **At Risk** — admin-only; **active** tactics reporting Not Started or Delayed, grouped by objective with
   short themes. Retired tactics are excluded: flagging superseded work would send leadership chasing it.
+  - **Provenance markers (added 2026-08-03).** Each row whose status was not reconfirmed this cycle carries
+    an *as of Mmm YYYY* marker, or **never reported** when no committee has ever answered for it. A header
+    line gives the split. Freshness is judged **per tactic, not per committee**: a committee can file a
+    report and still leave individual tactics blank — Executive reported in July and left 8.2.3 and 8.2.5
+    blank — so committee-level attribution would have marked those current when they are five months stale.
+  - The signal is `last_reported_at`: the current export carries no submission date, so a value from this
+    cycle lands `null` while a carried-forward value keeps the timestamp of the cycle it came from. If a
+    date column is ever restored, `tacticFreshness()` falls back to comparing against `metadata.cycle_date`.
+  - `COMMITTEE_ALIASES` folds **`Executive/Impact` → `Executive`** (same committee). It only affects the
+    hover text, which distinguishes "reported but left this blank" from "has not reported at all".
 - **Footer** — 2026 copyright + "Dashboard designed and built by Black Swan Causal Labs, LLC".
   The contact line ("Questions about the content? Email info@pharmacoepi.org") now sits in its own card
   between the last objective and the footer.

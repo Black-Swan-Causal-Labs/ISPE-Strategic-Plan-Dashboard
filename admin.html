@@ -227,6 +227,19 @@
   .at-risk-item .ar-status.not-started { background: var(--not-started-tint); color: var(--not-started-ink); border: 1px solid var(--not-started); }
   .at-risk-item .ar-desc { color: var(--text); flex: 1; }
   .at-risk-item .ar-owner { color: var(--text-light); font-size: 0.72rem; }
+  /* Provenance marker. Deliberately NOT a coloured pill: the row already carries
+     one (the status badge), and the validated palette owns amber for Delayed, so
+     a second chip would read as a status. Muted text reads as an annotation, and
+     the wording carries the whole meaning without depending on colour. */
+  .at-risk-item .ar-asof {
+    color: var(--text-light); font-size: 0.72rem; font-style: italic;
+    border-bottom: 1px dotted #b9c4d1; cursor: help; white-space: nowrap;
+  }
+  .at-risk-item .ar-asof.ar-never { font-style: normal; font-weight: 600; }
+  .at-risk-freshness {
+    font-size: 0.72rem; color: var(--text-light);
+    margin: -2px 0 8px; line-height: 1.45;
+  }
   .at-risk-item:hover { background: #fff3c2; border-radius: 4px; }
   .at-risk-item:hover .ar-id { text-decoration: underline; }
   .at-risk-group + .at-risk-group { margin-top: 4px; }
@@ -1169,6 +1182,48 @@ const OBJECTIVE_THEMES = {
   7: 'Diversity & Inclusion',
   8: 'External Partnerships',
 };
+// ---- Provenance for the at-risk panel ----
+// A committee filing a report does NOT mean every tactic it owns got a fresh
+// status. Executive reported in the July 2026 cycle and still left 8.2.3 and
+// 8.2.5 blank, so committee-level attribution would mark those two current when
+// they are five months stale. Freshness is therefore judged per tactic.
+//
+// The 2026-07-30 report export carries no submission date, so a value taken from
+// the current cycle lands with last_reported_at = null while a carried-forward
+// value keeps the timestamp of the cycle it actually came from. If ISPE restores
+// a date column, the date comparison below takes over and the rule still holds.
+//
+// Committee identity is only used for the explanatory tooltip. Executive/Impact
+// is the Executive committee, so it resolves to Executive rather than reading as
+// a committee that never reported.
+const COMMITTEE_ALIASES = { 'Executive/Impact': 'Executive' };
+
+function tacticFreshness(t) {
+  const when = t && t.last_reported_at;
+  if (!when) return (t && t.last_reported_by) ? 'fresh' : 'never';
+  const cycle = (data.metadata && data.metadata.cycle_date) || '';
+  if (cycle && String(when).slice(0, 10) >= String(cycle).slice(0, 10)) return 'fresh';
+  return 'stale';
+}
+
+// true / false / null, where null means "no cycle_committees recorded, so this
+// is unknowable" - callers stay quiet instead of guessing.
+function committeeReportedThisCycle(name) {
+  const list = (data.metadata && data.metadata.cycle_committees) || [];
+  if (!list.length) return null;
+  const canon = COMMITTEE_ALIASES[name] || name || '';
+  if (list.indexOf(canon) !== -1) return true;
+  return canon.split('/').map(s => s.trim()).some(s => s && list.indexOf(s) !== -1);
+}
+
+// Parsed off the string rather than via new Date(), which shifts an ISO date
+// across a timezone boundary and can report the wrong month.
+function monthYear(iso) {
+  const m = /^(\d{4})-(\d{2})/.exec(String(iso || ''));
+  if (!m) return '';
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2] - 1] + ' ' + m[1];
+}
+
 function renderAtRisk() {
   const el = document.getElementById('atRiskPanel');
   if (!el) return;
@@ -1201,17 +1256,49 @@ function renderAtRisk() {
     const isDelayed = t.status === 'In Progress - Delayed';
     const cls = isDelayed ? 'delayed' : 'not-started';
     const label = isDelayed ? 'Delayed' : 'Not Started';
+    const owner = g.responsible_committee;
+    const cycleName = (data.metadata && data.metadata.cycle_label) || 'the current';
+    let asOf = '';
+    const freshness = tacticFreshness(t);
+    if (freshness === 'stale') {
+      const reported = committeeReportedThisCycle(owner);
+      const why = reported === true
+        ? owner + ' filed a report in the ' + cycleName + ' cycle but left this tactic blank. '
+          + 'The status shown is carried forward from ' + monthYear(t.last_reported_at) + ', not reconfirmed.'
+        : reported === false
+          ? owner + ' has not reported since ' + monthYear(t.last_reported_at) + '. '
+            + 'The status shown is carried forward, not reconfirmed.'
+          : 'Carried forward from ' + monthYear(t.last_reported_at) + ', not reconfirmed in the current cycle.';
+      asOf = `<span class="ar-owner">·</span> <span class="ar-asof" title="${esc(why)}">as of ${esc(monthYear(t.last_reported_at))}</span>`;
+    } else if (freshness === 'never') {
+      const why = 'No committee has ever reported a status for this tactic. '
+        + 'The status shown is the plan default, not an observation.';
+      asOf = `<span class="ar-owner">·</span> <span class="ar-asof ar-never" title="${esc(why)}">never reported</span>`;
+    }
     return `
         <div class="at-risk-item" onclick="jumpToGoal('${esc(g.goal_id)}')" style="cursor:pointer;">
           <span class="ar-id">${esc(t.tactic_id)}</span>
           <span class="ar-desc">${esc(t.description)}
-            <span class="ar-owner">· ${esc(g.responsible_committee)}</span>
+            <span class="ar-owner">· ${esc(owner)}</span>
+            ${asOf}
           </span>
           <span class="ar-status ${cls}">${label}</span>
         </div>`;
   };
+  // Only worth a line when the panel actually mixes provenance. A cycle where
+  // everything was reconfirmed should not carry a caveat it has not earned.
+  const fc = { fresh: 0, stale: 0, never: 0 };
+  groups.forEach(({items}) => items.forEach(({t}) => { fc[tacticFreshness(t)]++; }));
+  const bits = [];
+  if (fc.fresh) bits.push(fc.fresh + ' confirmed this cycle');
+  if (fc.stale) bits.push(fc.stale + ' carried forward');
+  if (fc.never) bits.push(fc.never + ' never reported');
+  const freshNote = bits.length > 1
+    ? `<div class="at-risk-freshness">${esc(bits.join(' · '))} — a carried-forward item is the last status on record, not a fresh assessment. Hover any date for the reason.</div>`
+    : '';
   el.innerHTML = `
     <h4>At Risk: ${total} tactic${total>1?'s':''} · ${parts.join(', ')}</h4>
+    ${freshNote}
     ${groups.map(({o, items}) => `
       <div class="at-risk-group">
         <div class="ar-group-title">
