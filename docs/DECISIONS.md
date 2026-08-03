@@ -3,6 +3,11 @@
 _Why the dashboard is built the way it is. Newest context at the bottom. See `STATUS.md` for the current snapshot._
 
 ## Ownership & hosting
+> ⚠️ **The fork-and-host plan below was superseded on 2026-08-03** — it cannot be assembled once the working
+> repo is private. See "Private working repo, push-to-publish" at the bottom of this file, and
+> `MIGRATION-private-repo.md` for the replacement. The rest of this section is kept as the record of what was
+> intended and why. **Nothing has been executed yet**, so the live site still follows the old model.
+
 - **Repo moved to the `Black-Swan-Causal-Labs` GitHub org** (transferred from a personal account; old URL redirects).
 - **Deployment plan: ISPE forks, ISPE hosts.** ISPE's GitHub is `github.com/ispe-sp` (a personal *user*
   account — works for forking + Pages; an Org would be tidier for an official multi-maintainer presence, but
@@ -336,3 +341,49 @@ behave like a refresh; it behaved like a different instrument. Everything below 
   should probably never render on a public dashboard. The columns are recognized and reported, not consumed.
 - **Tactic 3.1.8 does not exist yet.** It is referenced as the successor to four retired tactics but is not
   in the plan; goal 3.1 still runs .1 to .7. Adding it means editing `DEFAULT_DATA` in both HTML files.
+
+## At-risk provenance is per tactic, not per committee (2026-08-03)
+Only 6 of ~13 committees reported on 7.30, so the at-risk panel was presenting 28 tactics as one list of
+equally-current problems when most were last-known status from February or March. Each row now carries an
+*as of Mmm YYYY* marker, or **never reported**, with a header line giving the split: **3 confirmed this
+cycle, 24 carried forward, 1 never reported.**
+- **Committee-level attribution was tried first and is wrong.** A committee filing a report does not mean
+  every tactic it owns got an answer: Executive reported in July and still left 8.2.3 and 8.2.5 blank. Owner
+  matching mislabelled **7 of 28 rows** as current (8.2.3, 8.2.5, 6.1.8, 7.1.7, 4.2.2, 4.2.3, and 5.3.5 in
+  the other direction). Freshness is therefore read per tactic.
+- **The signal is `last_reported_at`.** This export carries no submission date, so a value from the current
+  cycle lands `null` while a carried-forward one keeps the timestamp of the cycle it came from.
+  `tacticFreshness()` falls back to comparing against `metadata.cycle_date`, so the rule survives ISPE
+  restoring a date column.
+- **`COMMITTEE_ALIASES` folds `Executive/Impact` → `Executive`** (same committee, per the user). It affects
+  only the hover text, which separates "reported but left this blank" from "has not reported at all" — both
+  stale, but only the second is worth chasing.
+- **Not a coloured pill.** The row already carries one, and the CVD-validated palette owns amber for Delayed,
+  so a second chip would read as a status. Muted italic text with a dotted underline reads as an annotation,
+  and the wording carries the meaning without depending on colour.
+- The header line is suppressed when provenance is uniform, so a fully-reported cycle carries no caveat it
+  has not earned.
+
+## Private working repo, push-to-publish (2026-08-03) — planned, not executed
+Replaces "ISPE forks, ISPE hosts" at the top of this file. Full plan in `MIGRATION-private-repo.md`.
+- **The working repo goes private**, the ISPE reviewer is added as a collaborator, and publishing becomes an
+  Action that **pushes** the built public payload into a separate public repo. ISPE's fork disappears from
+  the design.
+- **Why the fork model had to go:** forks inherit visibility, a private fork cannot be flipped to public
+  (GitHub's workaround is to duplicate, which is not a fork and has no "Sync fork"), and `ISPE-SP` is a
+  personal *user* account, so Pages there serves public repos only. Confirmed against the API 2026-08-03.
+- **The bigger win is not privacy, it is the removal of "Sync fork."** Forks do not auto-update, so every
+  refresh needed a click from the party least able to act quickly, failing silently as a stale public
+  dashboard. A push lands on the live site with no ISPE action required after setup.
+- **`public-deploy` is retired.** The Action builds from an explicit file list, which is auditable and fails
+  loudly; the second allowlist `.gitignore` on that branch drifted at least once (`fonts/`, 2026-07-27).
+- **Review moves to a Codespace** running `admin-server.py` — the only option that gives a visual admin
+  review without a local Python setup and without publishing `admin.html`. It works because a Codespace has a
+  backend, so Save/Publish keep functioning. A private repo's Pages site is still *publicly visible* on the
+  Team plan (private Pages is Enterprise Cloud only), so serving admin from there was never an option.
+- **The CSV can now live in git.** The 7.30 export carries no PII — verified: no Name / Email / Contact ID /
+  IP / geo columns and zero email or IP patterns in cell contents, against 13 emails and 24 IPs in the old
+  export. This is a property of the current format, **not a guarantee**, so the ingest Action must scan every
+  upload and fail closed rather than trust it.
+- **BSCL is on the Team plan** (Pages on private repos, Actions, Codespaces all available). The repo has 0
+  forks / 0 stars / 0 watchers, so going private retracts nothing.

@@ -2,6 +2,10 @@
 
 _Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-03._
 
+> **Next session starts here:** `MIGRATION-private-repo.md` — take the working repo private, replace ISPE's
+> fork with a push-to-publish Action, and move review into a Codespace. Planned in full, **nothing executed.**
+> Read its "Decisions needed before starting" section first; three questions gate the work.
+
 ## Start here (cold start)
 
 ```bash
@@ -23,9 +27,16 @@ python3 csv_to_dashboard_json.py
 | `new-csv-format-intake` | **merged into `main`** (2026-08-03, merge `faa9a3d`). Kept as a record; no longer the working branch |
 | `public-deploy` | **synced 2026-08-03** — the July cycle is live |
 | BSCL Pages | serving **`public-deploy`** — `admin.html` is **no longer public** (404 verified) |
-| ISPE fork | **does not exist yet** (404 re-verified 2026-08-03) |
+| ISPE fork | **does not exist yet** (404 re-verified 2026-08-03) — and per the migration plan it never will |
+| BSCL repo | **public**, Team plan, 0 forks / 0 stars / 0 watchers. Going private retracts nothing |
+
+**Uncommitted / unpushed as of the end of the 2026-08-03 session:**
+- `main` is **1 commit ahead of origin** — `8d587e6`, the at-risk provenance markers. Admin-only, so the
+  public site is unaffected either way. Push it or don't; nothing depends on it.
 
 **Open items** (as of 2026-08-03):
+0. **Migrate to a private working repo with push-to-publish** — the plan is written
+   (`MIGRATION-private-repo.md`) and is the intended next session. Supersedes item 7 below.
 1. ~~Flip BSCL Pages to `public-deploy`~~ — **done.** `admin.html` now returns 404 publicly.
 2. ~~Confirm the footer copyright holder~~ — **confirmed: ISPE owns it.** The footer was already correct.
 3. ~~Absorb the new CSV format~~ — **done**, merged to `main`. See "The 7.30 cycle" below.
@@ -37,10 +48,11 @@ python3 csv_to_dashboard_json.py
 6. **The rest of the cycle is outstanding** — only 6 committees reported; the user is waiting on the others.
    When they arrive, follow "Updating the data" below — and note that step 2 (reset `data.json` first)
    matters more than usual now, because a second partial cycle merges onto this one.
-7. **How ISPE receives updates — still open, and now the top item.** It was gated on absorbing the format
-   work and ingesting the new data; that is done and live, so nothing is blocking it. Ask for push access to
-   their fork, or propose they embed the BSCL Pages URL directly, so they are not the bottleneck once they
-   do fork. Settle it **before** they fork — it is much harder to change afterwards.
+7. ~~How ISPE receives updates~~ — **answered 2026-08-03, see item 0.** The fork model is abandoned: forks
+   inherit visibility, a private fork cannot be made public, and `ISPE-SP` is a personal *user* account whose
+   Pages serves public repos only. Publishing becomes a push into a separate public repo, which also deletes
+   the "Sync fork" click that put ISPE on the critical path. **Still requires ISPE's cooperation once** — to
+   create the public repo and add a deploy key — but never again after that.
 
 ## The 7.30 cycle (what just happened)
 
@@ -72,7 +84,8 @@ intended to be embedded on the ISPE website as an `<iframe>`. No backend — eve
   - `admin-server.py` — **local** helper: serves the dashboard and turns admin's Save/Publish into
     real git commits/pushes. Run `python3 admin-server.py`, then open http://127.0.0.1:8800/admin.html
   - `fonts/` — self-hosted Source Serif 4 (woff2 + SIL OFL licence)
-  - `docs/` — this documentation
+  - `docs/` — this documentation: `STATUS.md` (here), `DECISIONS.md` (the why),
+    `MIGRATION-private-repo.md` (the planned next phase)
   - `.gitignore` — allowlist (only tracks the files above + images); **the raw survey CSV is intentionally NOT tracked (it contains names/emails/IPs)**
 - **`public-deploy`** — the deploy branch: **public dashboard only** (`index.html`, `data.json`, `fonts/`,
   images, `README.md`). `admin.html`, `admin-server.py`, and the CSV script are deliberately excluded so they
@@ -99,11 +112,11 @@ intended to be embedded on the ISPE website as an `<iframe>`. No backend — eve
     there will be nothing to point Pages at.
   - They then enable Pages on `public-deploy`, giving
     https://ispe-sp.github.io/ISPE-Strategic-Plan-Dashboard/ ← the iframe `src`.
-- **⚠️ Forks do not auto-update.** Every `data.json` refresh needs someone at ISPE to click **"Sync fork."**
-  That puts the party least able to act quickly on the critical path, and the failure mode is a public
-  dashboard quietly showing last quarter's numbers. Two ways out, both easier to arrange *before* they fork:
-  (a) ISPE iframes the BSCL Pages URL directly — no fork, no sync, updates land on push; or
-  (b) ISPE forks but grants push access, so BSCL syncs it. Not yet raised with them.
+- **⚠️ Forks do not auto-update** — every refresh would need someone at ISPE to click **"Sync fork,"** putting
+  the party least able to act quickly on the critical path, failing silently as a public dashboard showing
+  last quarter's numbers. **This is why the fork model was abandoned on 2026-08-03.** The replacement is a
+  push into a separate public repo — see `MIGRATION-private-repo.md`. Still true, and still the reason,
+  until that migration runs.
 
 ## Embed
 ```html
