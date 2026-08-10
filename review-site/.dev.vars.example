@@ -1,0 +1,22 @@
+# Copy to `.dev.vars` for LOCAL development only. `.dev.vars` is gitignored and
+# is never uploaded to Cloudflare Pages — `wrangler pages dev` reads it, deploys
+# do not.
+#
+# This is a bypass of the Access sign-in, so it is deliberately awkward to turn
+# on: BOTH variables must be set, and it only takes effect when ACCESS_TEAM_DOMAIN
+# and ACCESS_AUD are absent. In production those are always set, so this branch
+# is unreachable there even if the file somehow shipped.
+
+ALLOW_DEV_AUTH="1"
+DEV_REVIEWER_EMAIL="you@example.org"
+
+# Optional: makes the dev identity an owner, so you can test delete-anyone.
+# OWNER_EMAILS="you@example.org"
+
+# --- notification (optional locally) ---------------------------------------
+# Where the "Complete review" summary goes. Leave unset and completion still
+# works — the reviewer is told plainly that no email went out.
+#
+# For local testing, point it at anything that accepts a POST:
+# EMAIL_PROVIDER="webhook"
+# EMAIL_WEBHOOK_URL="http://127.0.0.1:9999/hook"

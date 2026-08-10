@@ -6,9 +6,13 @@ _Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last u
 > 1. **ISPE-SP forks and enables Pages** — an agreed stopgap, not a reversal of the migration. A ready-to-send
 >    handoff note is in "Handing the fork to ISPE-SP" below. **Nothing has been forked yet** (verified
 >    2026-08-10: 0 forks, 0 network, ISPE-SP has 0 public repos).
-> 2. **Decide between the Codespace review step and a Cloudflare-hosted admin.** The hosted option looks
->    better on every axis and would make the Codespace step in `MIGRATION-private-repo.md` unnecessary. See
->    DECISIONS, "A hosted admin is under consideration". A UI mock exists: `review-panel-mock.html`.
+> 2. **Deploy the reviewer site.** The hosted-admin question is **decided and built** (2026-08-10):
+>    `review-site/` is a Cloudflare Pages + Access + D1 app where reviewers comment, flag and approve, and
+>    everyone sees everyone's. **Complete review** emails you that reviewer's full summary — one mail per
+>    reviewer per cycle, which is the right volume for a site that moves twice a year. It runs and is tested
+>    locally; **nothing is deployed to Cloudflare yet**.
+>    Follow `review-site/DEPLOY.md` — step 4 (Access) is what makes it private, and step 7 (verify) is the
+>    part not to skip. This supersedes the Phase-6 Codespace step in `MIGRATION-private-repo.md`.
 
 ## Start here (cold start)
 
@@ -43,9 +47,9 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
 **Open items** (as of 2026-08-10):
 1. **ISPE-SP forks + Pages on `public-deploy`** — see the handoff note below. The one thing that can go wrong
    is Pages pointed at `main`, which publishes `admin.html` and the committee notes under ISPE's URL.
-2. **Codespace vs Cloudflare-hosted admin** — decide before investing in either. If hosted admin wins,
-   `MIGRATION-private-repo.md`'s Phase-6 Codespace step drops out, and reviewer feedback needs a Function +
-   KV store (mock: `review-panel-mock.html`).
+2. **Deploy `review-site/`** — built and locally verified 2026-08-10, not yet on Cloudflare. See
+   `review-site/DEPLOY.md`. It is review-only by design: reviewers comment, flag and approve, but cannot
+   change a status or publish. The Phase-6 Codespace step in `MIGRATION-private-repo.md` is now dead.
 3. **Tidy the 8 published revision rationales.** They read as raw survey answers — one begins *"Yes."*. Now
    editable in the admin panel; edit, rebuild the payload, sync `public-deploy`.
 4. **Six "August 2026" completion dates record when the tactic was logged, not finished** (2.1.2, 2.1.3,
@@ -53,8 +57,9 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
    them, or leave as-is — a decision, not a bug.
 5. **Three committees have not reported this cycle** — Executive/Impact, Finance, Global Development /
    Strategic Planning. Their tactics carried forward and are flagged at-risk as unreconfirmed.
-6. **Make admin's Save message honest** before anyone uses a hosted copy. It says "Saved in this browser
-   only", but `ispe_sp_data` is written and never read back, so edits are gone on reload.
+6. **Make admin's Save message honest.** It says "Saved in this browser only", but `ispe_sp_data` is written
+   and never read back, so edits are gone on reload. Less urgent than it was — `review-site/` is read-only and
+   never runs admin's Save — but still a live trap for anyone who opens `admin.html` without the helper.
 7. ~~Absorb the new CSV format~~ / ~~publish the August cycle~~ / ~~keep notes off the public site~~ /
    ~~complete the completion dates~~ / ~~the emblem~~ — **all done 2026-08-09/10 and live.**
 
@@ -101,6 +106,12 @@ intended to be embedded on the ISPE website as an `<iframe>`. No backend — eve
     from the flattened jpg, which erased the ring
   - `fonts/` — self-hosted Source Serif 4 (woff2 + SIL OFL licence)
   - `public/` — **build artifact**, gitignored, rebuilt on every publish. Never commit it
+  - `review-site/` — the **reviewer site**: Cloudflare Pages + Access (email one-time PIN) + D1. Reviewers
+    comment, flag and approve; state is shared, so everyone sees everyone's. **Complete review** emails the
+    owner that reviewer's summary; a failed send is recorded and shown, never swallowed. Read-only otherwise. Its page is
+    **generated from `index.html`** by `build_review_site.py` with match-count-asserted patches, so the
+    render code is never hand-copied a third time. `dist/` is generated — never edit or commit it.
+    See `review-site/DEPLOY.md`
   - `docs/` — this documentation: `STATUS.md` (here), `DECISIONS.md` (the why),
     `MIGRATION-private-repo.md` (the planned next phase)
   - `.gitignore` — allowlist (only tracks the files above + images). **No survey CSV is tracked.** The old

@@ -1,0 +1,238 @@
+/* ==========================================================================
+   Review layer — injected into a copy of index.html by build_review_site.py.
+   Everything here is prefixed rv- so it cannot collide with the dashboard's
+   own classes, which are maintained in index.html and copied verbatim.
+
+   Deliberately does NOT touch the status palette. Those four hues and their
+   glyphs are colourblind-validated and load-bearing; review affordances use
+   teal (action) and red (flag), neither of which is a status colour.
+   ========================================================================== */
+
+:root {
+  --rv-ink: #0f766e;
+  --rv-tint: #f0fdfa;
+  --rv-edge: #99f6e4;
+  --rv-flag: #b91c1c;
+  --rv-flag-tint: #fef2f2;
+  --rv-flag-edge: #fecaca;
+}
+
+/* ---------- top bar ---------- */
+.rv-bar {
+  position: sticky; top: 0; z-index: 900;
+  background: #0b1622; color: #fff;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 8px 22px;
+  font: 600 0.72rem/1.5 var(--font-sans);
+}
+.rv-bar .rv-tag {
+  background: var(--rv-ink); color: #fff; border-radius: 4px;
+  padding: 2px 9px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.rv-bar .rv-who { color: #cbd5e1; font-weight: 500; }
+.rv-bar .rv-who b { color: #fff; font-weight: 700; }
+.rv-bar .rv-state { margin-left: auto; color: #94a3b8; font-weight: 500; }
+.rv-bar .rv-state.rv-saving { color: #fcd34d; }
+.rv-bar .rv-state.rv-error { color: #fca5a5; }
+
+/* A failed save must be impossible to miss. This dashboard's history is a
+   list of silent failures that rendered as plausible pages. */
+.rv-alert {
+  background: var(--rv-flag); color: #fff;
+  padding: 11px 22px; font: 0.85rem/1.5 var(--font-sans);
+  display: none;
+}
+.rv-alert.rv-on { display: block; }
+.rv-alert b { font-weight: 700; }
+.rv-alert button {
+  margin-left: 10px; background: rgba(255,255,255,0.16); color: #fff;
+  border: 1px solid rgba(255,255,255,0.4); border-radius: 5px;
+  padding: 2px 9px; font: 600 0.72rem var(--font-sans); cursor: pointer;
+}
+
+/* ---------- cards ---------- */
+.rv-card {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 16px; overflow: hidden;
+}
+.rv-card-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 13px 20px; background: var(--rv-tint); border-bottom: 1px solid #e6f5f2;
+}
+.rv-card-head h2 {
+  font: 700 0.72rem/1.3 var(--font-sans); letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--rv-ink); flex: 1; margin: 0;
+}
+.rv-card-body { padding: 15px 20px; }
+
+.rv-pill {
+  font: 700 0.7rem var(--font-sans); padding: 3px 10px; border-radius: 11px; white-space: nowrap;
+}
+.rv-pill.rv-p-prog { background: var(--rv-ink); color: #fff; }
+.rv-pill.rv-p-flag { background: var(--rv-flag); color: #fff; }
+.rv-pill.rv-p-open { background: #e5e7eb; color: #374151; }
+
+.rv-progress { height: 7px; background: var(--progress-track); border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+/* scaleX, not width: animating width relayouts the page every frame. */
+.rv-progress > div {
+  height: 100%; width: 100%; background: var(--rv-ink); border-radius: 4px;
+  transform-origin: left center; transform: scaleX(0); transition: transform 0.25s ease;
+}
+@media (prefers-reduced-motion: reduce) { .rv-progress > div { transition: none; } }
+
+/* ---------- activity feed ---------- */
+.rv-feed { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; }
+.rv-feed-empty { font: italic 0.88rem var(--font-serif); color: var(--text-light); }
+.rv-feed-item {
+  display: flex; gap: 10px; align-items: flex-start; padding: 9px 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: #fafbfc; font-size: 0.88rem; cursor: pointer; text-align: left; width: 100%;
+  font-family: var(--font-serif); color: var(--text);
+}
+.rv-feed-item:hover { background: #f4f6f9; }
+/* Flagged rows carry the tint AND a ⚑ glyph on the target label (added in
+   paintFeed), matching how status badges pair a hue with a glyph. An earlier
+   version used a thick red left border instead — but that was a second COLOUR
+   channel for a state the tint already encoded, so it added nothing a
+   colourblind reader could use, on top of reading as generic card chrome. */
+.rv-feed-item.rv-f-flag { background: var(--rv-flag-tint); border-color: var(--rv-flag-edge); }
+.rv-feed-item.rv-f-flag .rv-f-target { color: var(--rv-flag); }
+.rv-feed-item.rv-f-done { opacity: 0.55; }
+.rv-feed-item .rv-f-target {
+  font: 700 0.68rem var(--font-sans); color: var(--text-light);
+  white-space: nowrap; padding-top: 2px;
+}
+.rv-feed-item .rv-f-body { flex: 1; }
+/* block, not inline: as a span the attribution ran straight on from the end of
+   the comment text with no gap ("…before this goes out.chair@ispe.test"). */
+.rv-feed-item .rv-f-meta {
+  display: block; font: 0.68rem var(--font-sans); color: var(--text-light); margin-top: 3px;
+}
+
+/* ---------- marks (flag / comment / approve) ---------- */
+.rv-marks { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.rv-mk {
+  min-width: 26px; height: 26px; padding: 0 5px;
+  border: 1px solid transparent; border-radius: 6px; background: transparent;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+  font: 0.8rem var(--font-sans); color: var(--text-light);
+  opacity: 0.32; transition: opacity 0.12s, background 0.12s;
+}
+/* Resting marks are faint so they do not compete with the data, but they are
+   never fully invisible: a control you must hover to discover is a control
+   most reviewers never find. */
+.objective-header:hover .rv-mk,
+.goal-header:hover .rv-mk,
+tr:hover .rv-mk,
+.rv-strip:hover .rv-mk,
+.rv-mk:focus-visible { opacity: 1; }
+.rv-mk:hover { background: #eef1f5; border-color: var(--border); opacity: 1; }
+.rv-mk.rv-on, .rv-mk.rv-has { opacity: 1; }
+.rv-mk.rv-flag.rv-on { color: var(--rv-flag); background: var(--rv-flag-tint); border-color: var(--rv-flag-edge); }
+.rv-mk.rv-cmt.rv-has { color: var(--rv-ink); background: var(--rv-tint); border-color: var(--rv-edge); font-weight: 700; }
+.rv-mk.rv-ok.rv-on { color: var(--rv-ink); background: var(--rv-tint); border-color: var(--rv-edge); }
+.rv-mk .rv-n { font: 700 0.68rem var(--font-sans); }
+
+tr.rv-flagged td { background: var(--rv-flag-tint); }
+
+/* The dashboard's goal header is a 3-column grid with the progress meter pinned
+   to column 3 across both rows. Appending the marks without saying where they
+   go auto-places them into the empty cell below the owner line, far left, which
+   reads as belonging to nothing. Give the review layer its own column. */
+.goal-header { grid-template-columns: auto 1fr auto auto; }
+.goal-header > .rv-marks { grid-column: 4; grid-row: 1 / span 2; align-self: center; }
+
+/* The review column added to the tactics table. */
+th.rv-col { width: 78px; }
+td.rv-cell { text-align: right; white-space: nowrap; }
+
+/* ---------- panel strips ---------- */
+.rv-strip {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-bottom: 0; border-radius: 10px 10px 0 0;
+  padding: 8px 18px; margin-bottom: -1px; position: relative; z-index: 1;
+}
+.rv-strip .rv-strip-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rv-strip .rv-thread { margin: 8px -18px -8px; border-radius: 0; }
+.rv-strip .rv-strip-label {
+  font: 700 0.68rem var(--font-sans); letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--text-light); flex: 1;
+}
+
+/* ---------- comment threads ---------- */
+.rv-thread { background: #fbfcfd; border-top: 1px dashed var(--border); padding: 12px 14px; }
+.rv-thread-row > td { padding: 0 !important; border-bottom: 1px solid #f0f2f5 !important; }
+
+.rv-comment {
+  background: #fff; border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 12px; margin-bottom: 8px; font-size: 0.88rem;
+}
+.rv-comment.rv-resolved { opacity: 0.6; }
+.rv-comment .rv-c-meta {
+  font: 0.68rem var(--font-sans); color: var(--text-light);
+  margin-bottom: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.rv-comment .rv-c-meta b { color: var(--text); font-weight: 700; }
+.rv-comment .rv-c-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.rv-c-actions { margin-left: auto; display: flex; gap: 6px; }
+.rv-c-actions button {
+  font: 600 0.68rem var(--font-sans); border: 1px solid var(--border);
+  background: #fff; border-radius: 5px; padding: 2px 8px; cursor: pointer; color: var(--text-light);
+}
+.rv-c-actions button:hover { background: #f4f6f9; color: var(--text); }
+
+.rv-composer { display: flex; gap: 8px; align-items: flex-start; }
+.rv-composer textarea {
+  flex: 1; min-height: 58px; border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 11px; font: 0.88rem/1.5 var(--font-serif); color: var(--text); resize: vertical;
+}
+.rv-composer textarea:focus { outline: none; border-color: var(--rv-ink); box-shadow: 0 0 0 3px rgba(15,118,110,0.12); }
+.rv-composer button {
+  font: 700 0.7rem var(--font-sans); background: var(--rv-ink); color: #fff;
+  border: 0; border-radius: 7px; padding: 9px 15px; cursor: pointer; white-space: nowrap;
+}
+.rv-composer button:hover { filter: brightness(1.08); }
+.rv-composer button:disabled { opacity: 0.5; cursor: default; filter: none; }
+.rv-hint { font: 0.68rem var(--font-sans); color: var(--text-light); margin-top: 6px; }
+
+/* ---------- complete review ---------- */
+.rv-signoff { padding: 14px 20px; border-top: 1px solid #f0f2f5; background: #fcfdfd; }
+.rv-complete-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.rv-complete-text { flex: 1; min-width: 240px; font: 0.85rem/1.5 var(--font-sans); color: var(--text); }
+.rv-complete-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+.rv-btn {
+  font: 700 0.76rem var(--font-sans); background: var(--rv-ink); color: #fff;
+  border: 1px solid var(--rv-ink); border-radius: 7px; padding: 9px 16px; cursor: pointer; white-space: nowrap;
+}
+.rv-btn:hover { filter: brightness(1.08); }
+.rv-btn-ghost { background: #fff; color: var(--text-light); border-color: var(--border); }
+.rv-btn-ghost:hover { background: #f4f6f9; color: var(--text); filter: none; }
+
+.rv-done { font-weight: 700; color: var(--rv-ink); }
+/* block + fit-content, not inline-block: as an inline element it ran on from
+   the end of "Summary emailed." instead of standing as its own prompt. */
+.rv-since {
+  display: block; width: fit-content; margin-top: 7px;
+  font-size: 0.8rem; color: var(--delayed-ink);
+  background: var(--delayed-tint); border-radius: 6px; padding: 5px 9px;
+}
+/* The delivery outcome is never implied by the absence of an error. It is
+   stated on the row every time, including the boring success case. */
+.rv-note { display: inline-block; font-size: 0.8rem; }
+.rv-note-ok { color: var(--text-light); }
+.rv-note-warn { color: var(--delayed-ink); }
+.rv-note-bad { color: var(--rv-flag); }
+
+.rv-stamp { font: 0.72rem var(--font-sans); color: var(--text-light); margin-top: 8px; display: block; }
+
+@media (max-width: 700px) {
+  .rv-bar { padding: 8px 14px; }
+  .rv-card-body, .rv-card-head, .rv-signoff { padding-left: 14px; padding-right: 14px; }
+  .rv-composer { flex-direction: column; }
+  .rv-composer button { width: 100%; }
+  .rv-stamp { margin-left: 0; width: 100%; text-align: left; }
+  /* The tactics table collapses to cards on narrow screens; the review cell
+     should not announce itself with an empty "Review" label. */
+  td.rv-cell { text-align: left; }
+}

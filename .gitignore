@@ -26,3 +26,21 @@
 # of this repo until it is private — see docs/MIGRATION-private-repo.md.
 # NOTE: public/ is the generated public payload (build_public_payload.py). It is a
 # build artifact, not source, and is rebuilt on every publish.
+
+# The reviewer site (Cloudflare Pages + Access + D1). Source only — its own
+# review-site/.gitignore keeps dist/ (generated), .dev.vars (local secrets) and
+# .wrangler/ (local D1 state) out. This allowlist has to name every level: with
+# `*` at the top, git will not descend into a directory that is not un-ignored.
+!review-site/
+!review-site/*.py
+!review-site/*.toml
+!review-site/*.sql
+!review-site/*.md
+!review-site/.gitignore
+!review-site/.dev.vars.example
+!review-site/src/
+!review-site/src/*
+!review-site/lib/
+!review-site/lib/*
+!review-site/functions/
+!review-site/functions/**

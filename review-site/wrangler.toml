@@ -1,0 +1,23 @@
+name = "ispe-sp-review"
+compatibility_date = "2026-08-01"
+pages_build_output_dir = "dist"
+
+# The review state. Every comment, flag and approval lives here — NOT in the
+# browser. That is the whole point: localStorage would give each reviewer a
+# private copy of their own checkmarks that nobody else could ever see.
+#
+# database_id is filled in by `wrangler d1 create ispe-sp-review` (see DEPLOY.md).
+# Left as a placeholder deliberately: a wrong-but-plausible id would bind to
+# somebody else's database rather than fail.
+[[d1_databases]]
+binding = "DB"
+database_name = "ispe-sp-review"
+database_id = "REPLACE_ME_SEE_DEPLOY_MD"
+
+# ACCESS_TEAM_DOMAIN and ACCESS_AUD are set in the Cloudflare dashboard
+# (Settings -> Environment variables), not here, so this file carries no
+# account-specific values into git. If either is missing at runtime the API
+# refuses to serve anything — see functions/api/_middleware.js.
+#
+# OWNER_EMAILS (optional, comma-separated) may resolve and delete anyone's
+# comments. Reviewers can always resolve, but only delete their own.

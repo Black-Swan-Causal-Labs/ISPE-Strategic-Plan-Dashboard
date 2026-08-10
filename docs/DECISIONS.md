@@ -505,8 +505,52 @@ account. So ISPE-SP forks, enables Pages on `public-deploy`, and IT embeds `ispe
   ISPE's own URL. The handoff note therefore makes "confirm `/admin.html` returns 404" an explicit step and
   tells them not to share the address if it does not.
 
-## A hosted admin is under consideration, and would supersede the Codespace step
-Putting `admin.html` on Cloudflare Pages behind Access was raised. Assessment:
+## The hosted reviewer site was chosen and built (2026-08-10)
+**Decided and built.** `review-site/` is a Cloudflare Pages project behind Access, with a Pages Function and
+a D1 database. It supersedes the Phase-6 Codespace step in `MIGRATION-private-repo.md`. Setup and the
+verification checklist are in `review-site/DEPLOY.md`. What the decision actually settled:
+
+- **Review-only, not a hosted admin.** Reviewers comment, flag and approve; they cannot change a status, edit
+  a rationale or publish. Hosting the *editor* would have meant turning Save/Publish into authenticated
+  server-side git operations and giving every reviewer the ability to alter the published plan. Editing stays
+  local, where `admin-server.py` already makes Save and Publish real git actions.
+- **Access with one-time PIN, not a shared password.** A shared password cannot tell reviewers apart, so
+  every comment would carry a self-declared, unverifiable name, and revoking one person would mean changing
+  it for everyone. Access verifies the email and the API reads the identity from the signed token, so
+  attribution is a property of the system rather than a request to be honest.
+- **D1, not a KV blob.** Review state as one JSON document per cycle is a read-modify-write: two reviewers
+  commenting in the same moment silently lose one comment. Comments are an append-only table instead, so
+  concurrent writes cannot clobber each other.
+- **Approvals are per reviewer, not one shared checkbox.** A shared tick cannot distinguish "nobody approved
+  yet" from "someone approved and someone else unticked it", and records nobody's name — which is the entire
+  content of an approval. The button shows the count and names the approvers.
+- **The site serves the notes-stripped public payload.** Reviewers are checking what is about to be
+  published, so that is the artifact to look at; it also keeps the committee notes off an internet-facing
+  host rather than leaving Access as the only thing in front of them. This is the one point where the build
+  departs from the "feed it working data" note below — it departs because the page is review-only and never
+  rendered the notes anyway.
+- **The page is generated from `index.html`, not copied.** STATUS already records that the render code exists
+  twice and "every fix lands twice"; a hand-maintained third copy would be the one nobody updates.
+  `build_review_site.py` patches the dashboard at build time and **asserts the match count of every patch**,
+  so drift in `index.html` fails the build instead of silently producing a review site with no comment buttons.
+- **Notification is one email per reviewer per cycle, triggered by them.** Not a daily digest (this site
+  changes twice a year, so a schedule is noise) and not per comment (a reviewer working through 99 tactics
+  would send dozens). Pressing **Complete review** mails the owner that reviewer's comments in full, grouped
+  by target, plus which objectives they did and did **not** approve — the second list being the more useful
+  signal. It is a button, not a checkbox, because a tick that silently emails somebody is a nasty surprise,
+  and it confirms first because email cannot be unsent.
+- **A completed review is recorded even when the email fails.** Delivery status is stored per attempt and
+  shown on the row. A reviewer who finished has finished; rolling that back because an API key expired would
+  be the software lying, and "it looked like it worked" is this project's characteristic failure.
+- **Mail goes out over HTTPS, not Cloudflare Email Routing.** `blackswancausallabs.com` is on Cloudflare
+  nameservers, which makes Email Routing look free and obvious — but its MX points at Google Workspace, and
+  enabling Email Routing wants those records. Breaking real email to save four notifications a year is a bad
+  trade. An outbound API call touches no DNS.
+- **The API fails closed.** With the Access variables unset it returns 503 and serves nothing, rather than
+  treating "no auth configured" as "allow". Verified, along with rejection of a forged token carrying a
+  correct audience, issuer and expiry.
+
+The original assessment that led here, kept for the reasoning:
 - **Most of the panel already works unhosted** — the code was written for it (`admin.html`, "everything falls
   back to the previous download-a-file behaviour"). Render, editing, Change Log, and **Publish** (which falls
   back to downloading the self-contained export) all function. **Save is the trap**: it reports "Saved in this

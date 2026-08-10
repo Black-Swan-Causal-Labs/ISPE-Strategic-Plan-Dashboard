@@ -1,0 +1,24 @@
+<!-- Injected as the first children of .container by build_review_site.py. -->
+
+<div class="rv-card" id="rvSummaryCard">
+  <div class="rv-card-head">
+    <h2>Cycle review &mdash; <span id="rvCycle">&hellip;</span></h2>
+    <span class="rv-pill rv-p-prog" id="rvPillProg">&hellip;</span>
+    <span class="rv-pill rv-p-flag" id="rvPillFlag">0 flagged</span>
+    <span class="rv-pill rv-p-open" id="rvPillOpen">0 open comments</span>
+  </div>
+  <div class="rv-card-body">
+    <div class="rv-progress"><div id="rvProgBar"></div></div>
+    <div class="rv-feed" id="rvFeed"></div>
+  </div>
+  <!-- Painted by paintComplete(). A button rather than a checkbox because it
+       sends mail: a tick that silently emails somebody is a nasty surprise. -->
+  <div class="rv-signoff" id="rvComplete"></div>
+</div>
+
+<div class="rv-card" id="rvGeneralCard">
+  <div class="rv-card-head">
+    <h2>Overall comments on this cycle</h2>
+  </div>
+  <div class="rv-card-body" id="rvGeneralBody"></div>
+</div>
