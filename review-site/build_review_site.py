@@ -216,6 +216,20 @@ def main():
         DIST.mkdir(parents=True, exist_ok=True)
         (DIST / "index.html").write_text(html, encoding="utf-8")
 
+        # Without this, Cloudflare Pages serves index.html for EVERY unmatched
+        # path — so /admin.html, /admin-server.py and /anything-at-all return
+        # 200 and a dashboard. Nothing leaks (those files are not in dist), but
+        # it silently defeats the "confirm /admin.html 404s" check this project
+        # relies on everywhere else, which would then pass forever by accident.
+        (DIST / "404.html").write_text(
+            "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
+            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+            "<title>Not found \u2014 ISPE reviewer site</title></head><body>"
+            + read(SRC / "404.html")
+            + "</body></html>",
+            encoding="utf-8",
+        )
+
         payload_path, payload_report = build_payload()
 
         assets = referenced_assets(html)
@@ -262,11 +276,23 @@ def main():
         if problems:
             raise BuildError("post-build checks failed:\n  " + "\n  ".join(problems))
 
+        # Belt and braces on the file list itself, not just the markup: the
+        # publish assertion this project uses on public-deploy, applied here.
+        shipped = sorted(str(p.relative_to(DIST)) for p in DIST.rglob("*") if p.is_file())
+        forbidden = [
+            f for f in shipped
+            if f in ("admin.html", "admin-server.py", "csv_to_dashboard_json.py", "build_public_payload.py")
+            or f.startswith("docs/")
+        ]
+        if forbidden:
+            raise BuildError("these must never be deployed:\n  " + "\n  ".join(forbidden))
+
         tactics = built.count('data-review-target="tactic:')
         print("Review site built into", DIST)
         print(f"  index.html      {len(built):,} bytes")
         print(f"  data.json       {payload_path.stat().st_size:,} bytes (notes stripped, --check passed)")
         print(f"  assets copied   {len(copied)}: " + ", ".join(copied))
+        print(f"  shipped files   {len(shipped)}: " + ", ".join(shipped))
         print(f"  review targets  tactic template x{tactics}, plus goals, objectives and 3 panels")
         if payload_report:
             print("\n" + payload_report)

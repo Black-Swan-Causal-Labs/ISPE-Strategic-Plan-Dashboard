@@ -12,7 +12,7 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "ispe-sp-review"
-database_id = "REPLACE_ME_SEE_DEPLOY_MD"
+database_id = "f3ac2655-65c7-40a8-a704-075d5302368b"
 
 # ACCESS_TEAM_DOMAIN and ACCESS_AUD are set in the Cloudflare dashboard
 # (Settings -> Environment variables), not here, so this file carries no
