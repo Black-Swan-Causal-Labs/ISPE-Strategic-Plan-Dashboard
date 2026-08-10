@@ -17,6 +17,7 @@ review-site/
   src/                     the review layer (css, markup, js) that gets injected
   functions/api/           the API: auth middleware + review endpoints
   lib/email.js             builds and sends the completion summary
+  (at-risk panel)          extracted from ../admin.html at build time, not copied
   schema.sql               comments, flags, approvals, submissions
   wrangler.toml            Pages + D1 binding
   dist/                    GENERATED. Never edit; never commit.
@@ -44,6 +45,14 @@ four times a year will use.
   It asks for confirmation first (email cannot be unsent), and afterwards the
   row shows when it was sent. If they comment again later, it prompts them to
   send an updated summary so the afterthought is not stranded.
+- The **At Risk panel** — the 31 tactics reporting Not Started or Delayed,
+  grouped by objective, with the provenance markers that say which statuses were
+  reconfirmed this cycle and which were carried forward. It is admin-only and
+  must never appear on the public dashboard, but it is precisely what a reviewer
+  needs before signing anything off, and this site is behind Access. It is
+  extracted from `admin.html` at build time, not copied, and can be commented on
+  and flagged like anything else. It needs no committee notes, so it does not
+  reopen the payload decision below.
 - An **activity feed** at the top listing everything outstanding, unresolved
   first. Clicking an entry jumps to it (and clears any active filter first, so
   the link never lands on a hidden row).

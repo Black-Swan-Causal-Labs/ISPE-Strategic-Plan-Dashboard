@@ -67,6 +67,7 @@
     if (kind === 'goal') return 'goal ' + id;
     if (kind === 'objective') return 'objective ' + id;
     if (kind === 'panel') {
+      if (target === 'panel:at-risk') return 'the at-risk list';
       for (var i = 0; i < STRIPS.length; i++) {
         if (STRIPS[i].target === target) return STRIPS[i].label.toLowerCase();
       }
@@ -314,6 +315,15 @@
     if (!state.loaded) return;
 
     installStrips();
+
+    var atRisk = document.getElementById('atRiskPanel');
+    if (atRisk) {
+      var heading = atRisk.querySelector('h4');
+      if (heading) {
+        mountMarks(heading, 'panel:at-risk');
+        syncThread(atRisk, heading, 'panel:at-risk', false);
+      }
+    }
 
     document.querySelectorAll('.objective[data-review-target]').forEach(function (node) {
       var target = node.getAttribute('data-review-target');
@@ -787,7 +797,16 @@
   }
 
   wrap('renderObjectives', decorate);
-  wrap('renderAll', function () { ensureCycle(); paintAll(); });
+  wrap('renderAll', function () {
+    if (typeof renderAtRisk === 'function') {
+      try { renderAtRisk(); } catch (e) { console.error('[review] renderAtRisk', e); }
+    }
+    ensureCycle();
+    paintAll();
+  });
+
+  // Status filters re-render the objectives but not the at-risk panel, and the
+  // panel is a whole-cycle view rather than a filtered one, so it stays put.
 
   // Catch-up path, only if the dashboard already rendered before this script
   // ran. Guarded on rendered output rather than firing unconditionally: until

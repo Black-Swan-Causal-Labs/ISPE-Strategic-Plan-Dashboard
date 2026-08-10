@@ -22,3 +22,10 @@
   </div>
   <div class="rv-card-body" id="rvGeneralBody"></div>
 </div>
+
+<!-- The at-risk panel. Admin-only, never on the public dashboard, but this is
+     exactly the list a reviewer needs before signing anything off. Filled by
+     renderAtRisk(), extracted from admin.html by build_review_site.py. It hides
+     itself when empty (.at-risk-panel:empty), so a clean cycle shows nothing
+     rather than an empty box. -->
+<div id="atRiskPanel" class="at-risk-panel"></div>

@@ -236,3 +236,13 @@ td.rv-cell { text-align: right; white-space: nowrap; }
      should not announce itself with an empty "Review" label. */
   td.rv-cell { text-align: left; }
 }
+
+/* ---------- at-risk panel ---------- */
+/* The extracted styles assume the panel sits inside admin's collapsible tray.
+   Standing alone here it needs its own spacing, and its heading has to make
+   room for the review marks. */
+#atRiskPanel.at-risk-panel { margin: 0 0 16px; }
+#atRiskPanel.at-risk-panel h4 { gap: 8px; }
+#atRiskPanel.at-risk-panel h4 .rv-marks { margin-left: auto; }
+/* Its own tinted surface would swallow the thread; keep the thread white. */
+#atRiskPanel > .rv-thread { background: #fff; border-radius: 6px; margin-top: 10px; }

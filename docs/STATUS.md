@@ -108,7 +108,9 @@ intended to be embedded on the ISPE website as an `<iframe>`. No backend — eve
   - `public/` — **build artifact**, gitignored, rebuilt on every publish. Never commit it
   - `review-site/` — the **reviewer site**: Cloudflare Pages + Access (email one-time PIN) + D1. Reviewers
     comment, flag and approve; state is shared, so everyone sees everyone's. **Complete review** emails the
-    owner that reviewer's summary; a failed send is recorded and shown, never swallowed. Read-only otherwise. Its page is
+    owner that reviewer's summary; a failed send is recorded and shown, never swallowed. Read-only otherwise.
+    Carries the **at-risk panel**, extracted from `admin.html` at build time — admin-only, still never on the
+    public dashboard, but the list a reviewer needs before signing off. Its page is
     **generated from `index.html`** by `build_review_site.py` with match-count-asserted patches, so the
     render code is never hand-copied a third time. `dist/` is generated — never edit or commit it.
     See `review-site/DEPLOY.md`

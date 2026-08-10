@@ -38,6 +38,7 @@ SRC = HERE / "src"
 DIST = HERE / "dist"
 
 DASHBOARD = REPO / "index.html"
+ADMIN = REPO / "admin.html"
 PAYLOAD_BUILDER = REPO / "build_public_payload.py"
 
 TITLE = "Review — ISPE Strategic Plan Progress Tracker"
@@ -70,8 +71,50 @@ def read(path):
     return path.read_text(encoding="utf-8")
 
 
+def extract(text, start, end, *, what, source):
+    """Lift the region between two anchors out of `source`, asserting both are unique.
+
+    Used for the at-risk panel, which lives only in admin.html. Copying it here
+    would make a third hand-maintained copy of render code the project already
+    has two of; extracting keeps admin.html the single source, and a drifted
+    anchor fails the build instead of silently dropping the panel.
+    """
+    for anchor, which in ((start, "start"), (end, "end")):
+        if text.count(anchor) != 1:
+            raise BuildError(
+                f"{what}: {which} anchor matched {text.count(anchor)} times in {source}, expected 1.\n"
+                f"  Anchor: {anchor[:110]!r}\n"
+                f"  {source} has drifted. Re-read the region and update this script."
+            )
+    i = text.index(start)
+    j = text.index(end, i)
+    if j <= i:
+        raise BuildError(f"{what}: end anchor precedes start anchor in {source}.")
+    return text[i:j].rstrip() + "\n"
+
+
 def build_html():
     html = read(DASHBOARD)
+    admin = read(ADMIN)
+
+    # The at-risk panel is admin-only and must never reach the public dashboard,
+    # but reviewers are precisely the audience for it: it is the list of what
+    # needs attention before this cycle is published. This site is behind Access,
+    # so it belongs here. It needs no committee notes — only status,
+    # last_reported_at, responsible_committee and cycle metadata, all of which
+    # survive build_public_payload.py — so it does not reopen the payload choice.
+    at_risk_css = extract(
+        admin,
+        "  .at-risk-panel:empty { display: none; }",
+        "  .goal.flash {",
+        what="at-risk styles", source="admin.html",
+    )
+    at_risk_js = extract(
+        admin,
+        "const AT_RISK_STATUSES = [",
+        "// ============ SUMMARY ============",
+        what="at-risk renderer", source="admin.html",
+    )
 
     # --- 1. a fourth column on the tactics table, for the review marks -------
     html = patch(
@@ -125,7 +168,9 @@ def build_html():
     html = patch(
         html,
         "</style>",
-        "\n/* ==== review layer (review-site/src/review-layer.css) ==== */\n"
+        "\n/* ==== at-risk panel, extracted from admin.html at build time ==== */\n"
+        + at_risk_css
+        + "\n/* ==== review layer (review-site/src/review-layer.css) ==== */\n"
         + read(SRC / "review-layer.css")
         + "\n</style>",
         what="review stylesheet injection",
@@ -144,10 +189,14 @@ def build_html():
     )
     # A separate <script> after the dashboard's own, so its functions are already
     # defined and can be wrapped rather than edited.
+    # Its own top-level <script>, matching admin.html: the declarations become
+    # globals so they can see index.html's `data`, `esc`, `activeTactics` and
+    # `jumpToGoal`, exactly as they do in admin.
     html = patch(
         html,
         "</body>",
-        "<script>\n" + read(SRC / "review-layer.js") + "\n</script>\n</body>",
+        "<script>\n/* at-risk panel, extracted from admin.html */\n" + at_risk_js + "</script>\n"
+        + "<script>\n" + read(SRC / "review-layer.js") + "\n</script>\n</body>",
         what="review script injection",
     )
 
@@ -261,6 +310,9 @@ def main():
             ('data-review-target="tactic:', "tactic review targets"),
             ('data-review-target="goal:', "goal review targets"),
             ('data-review-target="objective:', "objective review targets"),
+            ('id="atRiskPanel"', "at-risk panel container"),
+            ("function renderAtRisk", "at-risk renderer"),
+            (".at-risk-panel h4", "at-risk styles"),
             ('class="rv-cell"', "tactic review cells"),
             ("/api/review", "review API calls"),
         ):
