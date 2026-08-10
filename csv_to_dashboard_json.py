@@ -222,6 +222,16 @@ COMPLETED_AT = {
     "7.1.3": "February 2026",
     "8.2.1": "February 2026",
     "8.2.7": "February 2026",
+    # These six were already Completed before the August cycle — carried from the
+    # plan baseline, with last_reported_at None, so no survey ever reported them
+    # and no earlier completion date exists for them. Dated to August 2026 as the
+    # cycle they were recorded in, not the cycle they were finished in.
+    "2.1.2": "August 2026",
+    "2.1.3": "August 2026",
+    "2.1.6": "August 2026",
+    "3.1.3": "August 2026",
+    "6.1.2": "August 2026",
+    "7.1.2": "August 2026",
 }
 
 # Where the baked-in is_revised / is_new_in_plan flags came from. Rendered as
