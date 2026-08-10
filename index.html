@@ -547,6 +547,18 @@
   .status-badge.delayed     { border-color: var(--delayed);     color: var(--delayed-ink);     background-color: var(--delayed-tint); }
   .status-badge.completed   { border-color: var(--completed);   color: var(--completed-ink);   background-color: var(--completed-tint); }
 
+  /* When a tactic was completed. Sits beside the badge rather than inside it:
+     the badge's hue, glyph and shape are the validated status encoding and
+     must not take on a second job. */
+  .completed-when {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.7rem;
+    color: var(--text-light);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
   @media (forced-colors: active) {
     .status-badge { border: 2px solid CanvasText; color: CanvasText; background: Canvas; }
     .legend-dot, .summary-inline .stat .dot { border: 1px solid CanvasText; }
@@ -844,18 +856,40 @@ function applyStatusPalette() {
   if (!data.changed_color) data.changed_color = '#a02a93';
 }
 
+// When data.json cannot be read we fall back to the inline DEFAULT_DATA, which
+// renders a complete, plausible and WRONG dashboard - nothing about it looks
+// broken, and the console warning this used to rely on is seen by nobody. The
+// failure therefore has to announce itself on the page. The date is read from
+// the snapshot itself so this stays honest if DEFAULT_DATA is ever refreshed.
+function showStaleDataBanner(reason) {
+  const when = (DEFAULT_DATA.metadata && DEFAULT_DATA.metadata.as_of_date) || 'an earlier cycle';
+  const el = document.createElement('div');
+  el.setAttribute('role', 'alert');
+  el.style.cssText = 'position:sticky;top:0;z-index:9999;background:#b91c1c;color:#fff;'
+    + 'padding:12px 22px;font-size:0.85rem;line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,0.25);';
+  el.innerHTML = '<strong>These figures are out of date &mdash; do not use them.</strong> '
+    + 'Live data could not be loaded because ' + esc(reason) + '. '
+    + 'What is shown below is a built-in snapshot from <strong>' + esc(when) + '</strong>. '
+    + 'Open this page through a web server (<code style="background:rgba(255,255,255,0.2);'
+    + 'padding:1px 5px;border-radius:3px;">python3 -m http.server</code>) to see current data.';
+  document.body.prepend(el);
+}
+
 // ============ INIT ============
 async function init() {
+  let loadFailure = null;
   try {
     const resp = await fetch('data.json', { cache: 'no-store' });
     if (resp.ok) {
       data = await resp.json();
     } else {
-      console.warn('data.json not found, using inline fallback');
+      loadFailure = 'the server returned ' + resp.status + ' for data.json';
     }
   } catch (e) {
-    console.warn('Could not fetch data.json (likely opened via file://). Run `python3 -m http.server` from this folder to enable live data loading.', e);
+    loadFailure = 'the page was opened directly from disk (file://) instead of through a web server';
+    console.warn('Could not fetch data.json.', e);
   }
+  if (loadFailure) showStaleDataBanner(loadFailure);
   applyStatusPalette();
   if (data.metadata && data.metadata.as_of_date) {
     const el = document.getElementById('asOfDate');
@@ -1311,7 +1345,17 @@ function renderCompleted() {
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
         <div style="font-weight:600;color:${doneInk};margin-bottom:4px;">Tactic ${esc(t.tactic_id)} <span style="color:var(--text-light);font-weight:500;">(Goal ${esc(g.goal_id)})</span></div>
         <div style="color:var(--text);">${esc(t.description)}</div>
-        ${g.responsible_committee ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">Owner: <strong>${esc(g.responsible_committee)}</strong></div>` : ''}
+        ${(() => {
+          // Owner and completion date share one meta line. Six tactics were
+          // already complete when dating began and carry no date; they show the
+          // owner alone rather than an invented or hedged one.
+          const bits = [];
+          if (g.responsible_committee) bits.push(`Owner: <strong>${esc(g.responsible_committee)}</strong>`);
+          if (t.completed_at) bits.push(`Completed <strong>${esc(t.completed_at)}</strong>`);
+          return bits.length
+            ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">${bits.join(' &middot; ')}</div>`
+            : '';
+        })()}
       </div>`).join('')
   ).join('');
   container.innerHTML = `
@@ -1558,9 +1602,15 @@ function renderTactic(t) {
     : '';
   // A retired tactic has no meaningful status - showing its last one would put
   // superseded work back into the reader's sense of progress.
+  // Only a Completed tactic carries a completion date, and the six completed
+  // before tracking began have none - they render without one rather than
+  // borrowing a date they never had.
+  const completedWhen = (!retired && t.status === 'Completed' && t.completed_at)
+    ? `<span class="completed-when" title="Completed ${esc(t.completed_at)}">${esc(t.completed_at)}</span>`
+    : '';
   const statusCell = retired
     ? `<span style="color:var(--text-light);font-style:italic;">Retired<span class="sn-star">&dagger;</span></span>`
-    : statusBadgeHTML(t.status);
+    : statusBadgeHTML(t.status) + completedWhen;
   const notesHTML = t.notes
     ? `<span class="notes-text">${esc(t.notes)}</span>`
     : `<span class="notes-empty">—</span>`;

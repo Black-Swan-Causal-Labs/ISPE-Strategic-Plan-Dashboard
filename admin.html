@@ -710,6 +710,18 @@
   .status-select[data-status="Completed"] { border-color: var(--completed); color: var(--completed-ink); background-color: var(--completed-tint); }
   .status-select[data-status="Changed"] { border-color: var(--changed); color: var(--changed); background-color: #f5e6f3; }
 
+  /* When a tactic was completed. Sits beside the control rather than inside it:
+     the validated status encoding must not take on a second job. Curated in
+     COMPLETED_AT, or stamped with the cycle a tactic became Completed in. */
+  .completed-when {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.7rem;
+    color: var(--text-light);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
   /* Notes textarea */
   .notes-input {
     width: 100%;
@@ -1053,24 +1065,65 @@ function applyStatusPalette() {
   if (!data.changed_color) data.changed_color = '#a02a93';
 }
 
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August',
+                     'September','October','November','December'];
+
+// "August 2026" -> "2026-08". <input type="month"> silently renders blank for
+// anything else, which is why the field looked empty rather than wrong.
+function asOfToInputValue(label) {
+  const m = /^([A-Za-z]+)\s+(\d{4})$/.exec((label || '').trim());
+  if (!m) return '';
+  const i = MONTH_NAMES.findIndex(n => n.toLowerCase() === m[1].toLowerCase());
+  return i < 0 ? '' : m[2] + '-' + String(i + 1).padStart(2, '0');
+}
+
+// When data.json cannot be read we fall back to the inline DEFAULT_DATA, which
+// renders a complete, plausible and WRONG dashboard - nothing about it looks
+// broken, and the console warning this used to rely on is seen by nobody. It
+// matters more here than on the public page, because this file is the one
+// people are tempted to download from the repo and open directly. The date is
+// read from the snapshot itself so this stays honest if DEFAULT_DATA changes.
+function showStaleDataBanner(reason) {
+  const when = (DEFAULT_DATA.metadata && DEFAULT_DATA.metadata.as_of_date) || 'an earlier cycle';
+  const el = document.createElement('div');
+  el.setAttribute('role', 'alert');
+  el.style.cssText = 'position:sticky;top:0;z-index:9999;background:#b91c1c;color:#fff;'
+    + 'padding:12px 22px;font-size:0.85rem;line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,0.25);';
+  el.innerHTML = '<strong>These figures are out of date &mdash; do not use them.</strong> '
+    + 'Live data could not be loaded because ' + esc(reason) + '. '
+    + 'What is shown below is a built-in snapshot from <strong>' + esc(when) + '</strong>, '
+    + 'and edits made here cannot be saved. '
+    + 'Open this page through <code style="background:rgba(255,255,255,0.2);padding:1px 5px;'
+    + 'border-radius:3px;">python3 admin-server.py</code> to work with current data.';
+  document.body.prepend(el);
+}
+
 // ============ INIT ============
 async function init() {
   // Survey-driven data is the source of truth. Try to load it; fall back to
   // the inline DEFAULT_DATA (plan structure only) if the fetch fails.
+  let loadFailure = null;
   try {
     const resp = await fetch('data.json', { cache: 'no-store' });
     if (resp.ok) {
       data = await resp.json();
     } else {
-      console.warn('data.json not found, using inline fallback');
+      loadFailure = 'the server returned ' + resp.status + ' for data.json';
     }
   } catch (e) {
-    console.warn('Could not fetch data.json (likely opened via file://). Run `python3 -m http.server` from this folder to enable live data loading.', e);
+    loadFailure = 'the page was opened directly from disk (file://) instead of through a web server';
+    console.warn('Could not fetch data.json.', e);
   }
+  if (loadFailure) showStaleDataBanner(loadFailure);
   applyStatusPalette();
   if (data.metadata && data.metadata.as_of_date) {
     const el = document.getElementById('asOfDate');
     if (el) el.textContent = data.metadata.as_of_date;
+    // The month input was write-only until 2026-08-09, so the panel never
+    // showed the date it was about to publish. That is how as_of_date sat on
+    // April while the data said July.
+    const di = document.getElementById('dateInput');
+    if (di) di.value = asOfToInputValue(data.metadata.as_of_date);
   }
   // Compute survey stamp: latest reported date + unique committees that responded.
   let latest = null;
@@ -1660,7 +1713,17 @@ function renderCompleted() {
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
         <div style="font-weight:600;color:${doneColor};margin-bottom:4px;">Tactic ${esc(t.tactic_id)} <span style="color:var(--text-light);font-weight:500;">(Goal ${esc(g.goal_id)})</span></div>
         <div style="color:var(--text);">${esc(t.description)}</div>
-        ${g.responsible_committee ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">Owner: <strong>${esc(g.responsible_committee)}</strong></div>` : ''}
+        ${(() => {
+          // Owner and completion date share one meta line. Six tactics were
+          // already complete when dating began and carry no date; they show the
+          // owner alone rather than an invented or hedged one.
+          const bits = [];
+          if (g.responsible_committee) bits.push(`Owner: <strong>${esc(g.responsible_committee)}</strong>`);
+          if (t.completed_at) bits.push(`Completed <strong>${esc(t.completed_at)}</strong>`);
+          return bits.length
+            ? `<div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">${bits.join(' &middot; ')}</div>`
+            : '';
+        })()}
       </div>`).join('')
   ).join('');
   container.innerHTML = `
@@ -1895,6 +1958,9 @@ function renderTactic(t, oi, gi, ti) {
         <option ${t.status==='In Progress - Delayed'?'selected':''}>In Progress - Delayed</option>
         <option ${t.status==='Completed'?'selected':''}>Completed</option>
       </select>
+      ${(!retired && t.status === 'Completed' && t.completed_at)
+        ? `<span class="completed-when" title="Completed ${esc(t.completed_at)}">${esc(t.completed_at)}</span>`
+        : ''}
     </td>
     <td data-label="Notes"><textarea class="notes-input" placeholder="Add notes..." onchange="updateNotes(${oi},${gi},${ti},this.value)">${t.notes || ''}</textarea></td>
   </tr>`;
@@ -1983,8 +2049,7 @@ function updateProgress(oi, gi, val) {
 function updateDate(val) {
   if (val) {
     const [y, m] = val.split('-');
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    data.metadata.as_of_date = `${months[parseInt(m)-1]} ${y}`;
+    data.metadata.as_of_date = `${MONTH_NAMES[parseInt(m)-1]} ${y}`;
     document.getElementById('asOfDate').textContent = data.metadata.as_of_date;
     autoSave();
   }
@@ -2287,9 +2352,15 @@ function publishReadOnly() {
         // A retired tactic keeps its last status in the data, but publishing it
         // as a status badge puts superseded work back into the reader's sense
         // of progress - the same reason the dashboard suppresses it.
+        // The shared document is read by people who cannot open the dashboard,
+        // so a completion date has to travel with the status rather than be
+        // something they could look up.
+        const completedWhen = (!isRetired(t) && t.status === 'Completed' && t.completed_at)
+          ? '<div style="margin-top:4px;font-size:0.7rem;color:#6b7c93;font-variant-numeric:tabular-nums;white-space:nowrap;">'+esc(t.completed_at)+'</div>'
+          : '';
         const statusCell = isRetired(t)
           ? '<span style="padding:4px 12px;border-radius:14px;font-size:0.78rem;font-weight:600;white-space:nowrap;background:#f1f5f9;color:#475569;border:1px solid #6b7280;">Retired'+(t.retired_as_of ? ' &mdash; '+esc(t.retired_as_of) : '')+'</span>'
-          : badge(t.status);
+          : badge(t.status) + completedWhen;
         rows += '<tr><td style="padding:8px 12px;border-bottom:1px solid #f0f2f5;font-weight:600;white-space:nowrap;color:#6b7c93;font-size:0.8rem;">'+esc(t.tactic_id||'-')+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">'+esc(t.description)+'</td><td style="padding:8px 12px;border-bottom:1px solid #f0f2f5;">'+statusCell+'</td></tr>';
       });
       goals += '<div style="border:1px solid #e1e8ef;border-radius:8px;margin-bottom:10px;overflow:hidden;"><div style="padding:12px 16px;background:#fafbfc;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-weight:700;color:#1a2a3a;font-size:0.85rem;">'+esc(goal.goal_id)+'</span><span style="font-size:0.83rem;flex:1;">'+esc(goal.description)+'</span><span style="font-size:0.7rem;background:#eef1f5;padding:3px 10px;border-radius:12px;color:#6b7c93;">'+esc(goal.responsible_committee)+'</span>'+progressBar(computeGoalProgress(goal).score,computeGoalProgress(goal).max,80)+'</div><table style="width:100%;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:8px 12px;background:#f4f6f9;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px;color:#6b7c93;border-bottom:1px solid #e1e8ef;width:60px;">ID</th><th style="text-align:left;padding:8px 12px;background:#f4f6f9;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px;color:#6b7c93;border-bottom:1px solid #e1e8ef;">Description</th><th style="text-align:left;padding:8px 12px;background:#f4f6f9;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.3px;color:#6b7c93;border-bottom:1px solid #e1e8ef;width:180px;">Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
