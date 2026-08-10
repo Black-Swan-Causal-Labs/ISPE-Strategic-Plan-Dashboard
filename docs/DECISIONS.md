@@ -567,3 +567,50 @@ The original assessment that led here, kept for the reasoning:
   `review-panel-mock.html` (untracked): comment and flag on any tactic/goal/objective/panel, per-objective
   reviewed checkboxes, an aggregated feed, and review state that **resets when the cycle label changes** so
   an approval cannot silently carry onto data nobody saw.
+
+## Setting Access up has two traps that fail in opposite directions (2026-08-10)
+Both were hit on the real deployment and neither announces itself.
+
+- **One-time PIN is the default login method only while NO identity provider exists.** This account already
+  had a "Cloudflare" provider, so the login page offered *only* "Sign in with Cloudflare" — an option
+  requiring a Cloudflare account, which no external reviewer has. The site looked correctly protected and
+  would simply have refused everyone invited. One-time PIN has to be added explicitly under
+  **Integrations → Identity providers**. Verify the login page shows an **Email** box before sharing a URL.
+- **The login page prints a team name that is not necessarily the live team domain.** It showed
+  `wandering-firefly-0501.cloudflareaccess.com` while the working one is `ispe-sp.cloudflareaccess.com`.
+  Configuring `ACCESS_TEAM_DOMAIN` from the page would have failed the issuer check on every valid token.
+  The authoritative test is which host serves `/cdn-cgi/access/certs` — the real one returns 200, the other
+  404. Both the team domain and the AUD tag can be read straight out of the redirect the site returns to an
+  unauthenticated request, which is faster and does not depend on dashboard layout.
+
+## `@ispe.org` is a different society — the access rule nearly went to the wrong one (2026-08-10)
+The requested reviewer rule was "anyone `@ispe.org`". That domain belongs to the **International Society for
+Pharmaceutical Engineering**: separate registrar, separate nameservers, separate Microsoft tenant. The
+pharmacoepidemiology society is **`@pharmacoepi.org`**, which is what the dashboard's own contact address
+uses. The rule as requested would have admitted thousands of members of an unrelated organisation to a board
+carrying committee comments and the at-risk list, *and* refused every actual ISPE address. The acronym
+collision is easy to make and will recur — check the domain, not the initials.
+
+## Reviewer feedback, first cycle (2026-08-10)
+- **"Efforts" → "tactics".** The donut's centre label was the last place the old word survived.
+- **"Revised / New" came off the summary row.** It sat beside four mutually exclusive statuses and read as a
+  fifth category. It is an overlay tag — a revised tactic also carries one of the four — and only the
+  footnote said so. Removing it makes the remaining figures visibly sum to the total with nothing to
+  reconcile, and the Revisions & New Tactics section below already carries the detail plus a timeline. The
+  **filter button of the same name was kept**: the objection was to a row of counts that looked like
+  categories, and a filter is a tool for narrowing the view rather than a claim about them.
+
+## Tactic numbering: 3.1.8 stands unless Executive agrees otherwise (2026-08-10)
+Proposed: number the tactic replacing 3.1.4–3.1.7 as **3.1.4**, matching the convention of keeping new
+numbers aligned with active ones. Not adopted, pending the committee. Three reasons, in order of weight:
+
+1. **Executive named it 3.1.8 in writing** in their August survey response ("…overcome and included in the
+   new tactic 3.1.8"). That is the responsible committee's own identifier, not ours to reassign.
+2. **It is already published** — 8 fields on the live site (4 × `superseded_by`, 4 × rationale text).
+3. **`csv_to_dashboard_json.py` merges keyed on `tactic_id`.** Reusing 3.1.4 for different work means the
+   old 3.1.4's status and provenance carry silently onto a tactic its committee has never seen — the
+   plausible-but-wrong output this pipeline produces whenever an identity is ambiguous.
+
+If ISPE does renumber, the retired rows must move out of the goal listing in the same change, or two rows
+share an ID. Either way the replacement's text already exists: Executive supplied it in August and it sits
+unused in `data.json` as a `new_tactics` entry under goal 3.1.

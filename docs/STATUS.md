@@ -10,12 +10,15 @@ _Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last u
 >    `review-site/` is a Cloudflare Pages + Access + D1 app where reviewers comment, flag and approve, and
 >    everyone sees everyone's. **Complete review** emails you that reviewer's full summary — one mail per
 >    reviewer per cycle, which is the right volume for a site that moves twice a year.
->    **It is LIVE, gated and complete:** https://ispe-sp-review.pages.dev — Cloudflare Access, verified end
->    to end 2026-08-10, including a real completion email delivered via Resend to
->    the configured recipient (`submissions.delivery = 'sent'`). Test rows were cleared
->    afterwards, so the August 2026 board is empty and ready for real reviewers.
->    **Nothing is outstanding — the URL can be shared.**
->    This supersedes the Phase-6 Codespace step in `MIGRATION-private-repo.md`.
+>    **It is LIVE, gated and shared-ready:** https://ispe-sp-review.pages.dev — Cloudflare Access, verified
+>    end to end 2026-08-10 including a real completion email (`submissions.delivery = 'sent'`). Test rows
+>    were cleared, so the August 2026 board is empty. This supersedes the Phase-6 Codespace step in
+>    `MIGRATION-private-repo.md`.
+> 3. **Daniela's review feedback is half-applied and NOT published — this is the live thread.** Two of her
+>    three points are done on the `review-site` branch and deployed to the reviewer site only; the public
+>    dashboard is untouched and still says "EFFORTS". The third (tactic numbering) is **waiting on her
+>    reply**. Nothing should go to `public-deploy` until that lands, or the public site changes twice in a
+>    week for no reason.
 
 ## Start here (cold start)
 
@@ -43,32 +46,55 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
 | BSCL Pages | serving **`public-deploy`** — `admin.html` 404 verified 2026-08-10 |
 | ISPE fork | **does not exist** — 0 forks / 0 network, re-verified 2026-08-10 |
 | BSCL repo | **public**, Team plan, 0 forks / 0 stars / 0 watchers |
+| `review-site` | `8d4cb42`, pushed. **6 commits ahead of `main`, not merged.** The reviewer site plus Daniela's first two fixes |
+| Cloudflare | Pages `ispe-sp-review` + D1 `ispe-sp-review` + Access app "ISPE Strategic Plan Review" |
 | `new-csv-format-intake` | merged 2026-08-03 (`faa9a3d`); kept as a record only |
 
-**Working tree clean, both branches pushed.** Nothing is pending.
+**Working tree clean, all three branches pushed.** `review-site` is deliberately unmerged: it carries
+changes to `index.html` and `admin.html` that should reach the public site in a single publish, once the
+numbering question is settled.
 
 **Open items** (as of 2026-08-10):
 1. **ISPE-SP forks + Pages on `public-deploy`** — see the handoff note below. The one thing that can go wrong
    is Pages pointed at `main`, which publishes `admin.html` and the committee notes under ISPE's URL.
-2. **Share the reviewer site URL with ISPE.** Deployed, gated and fully working
-   (https://ispe-sp-review.pages.dev, D1 `ispe-sp-review`, Access app "ISPE Strategic Plan Review",
-   policy "ISPE reviewers" = `@pharmacoepi.org` + 4 named addresses; Resend sends the completion summary
-   to the configured recipient). Review-only by design: reviewers cannot change a status or
-   publish. Note the sender is Resend's shared `onboarding@resend.dev`, which delivers **only** to the
-   Resend account owner's address — adding a second recipient needs a verified domain.
+2. **Daniela's feedback on the August cycle (2026-08-10).** Three points; the first two are done on
+   `review-site` and live on the reviewer site, **not on the public dashboard**:
+   - ~~"95 Efforts" -> "95 tactics"~~ done. The donut's centre label was the last place the old word survived.
+   - ~~"Revised / New" removed from the summary row~~ done. It is an overlay tag, not a fifth status, and
+     reading it as mutually exclusive with the other four was exactly the confusion she described. The
+     remaining four now visibly sum to the total. The **filter button of the same name was kept** — she
+     described the summary row, and a filter is a tool rather than a claim. Worth confirming with her.
+   - **Tactic numbering — awaiting her reply.** She proposed the tactic replacing 3.1.4–3.1.7 be numbered
+     **3.1.4** rather than 3.1.8. **Executive named it 3.1.8 in writing** in their August survey response,
+     and that number is already published in 8 fields (4 x `superseded_by`, 4 x rationale text). Reusing
+     3.1.4 would also collide with the ingest script, which merges keyed on `tactic_id`: the old 3.1.4's
+     status and provenance would silently attach to a tactic its committee has never seen. Recommendation
+     sent — keep 3.1.8 and actually add it. If she and Executive agree to renumber instead, it is a
+     `DEFAULT_DATA` edit in both HTML files plus the 8 published fields.
+3. **Add tactic 3.1.8 — the wording already exists.** Four retired tactics point at a successor that is not
+   in the plan, and Goal 3.1 reads `3/3`, which implies the goal is done. Executive supplied the text in the
+   August survey; it sits unused in `data.json` under goal 3.1 as a `new_tactics` entry. Adding it moves
+   active 95 -> 96, Goal 3.1 -> 3/4, Objective 3 -> 5/10. Set it **Not Started with no provenance** so it
+   reads "never reported" rather than inheriting the old 3.1.4's Executive attribution. Blocked on item 2.
+4. **Share the reviewer site URL with ISPE.** Ready now. Policy "ISPE reviewers" = `@pharmacoepi.org` +
+   4 named addresses; adding a reviewer is one dashboard edit, no redeploy.
    ⚠️ **`@ispe.org` is a different organisation** (International Society for Pharmaceutical Engineering);
    the pharmacoepidemiology society is `@pharmacoepi.org`. Do not "fix" the policy to `@ispe.org`.
-3. **Tidy the 8 published revision rationales.** They read as raw survey answers — one begins *"Yes."*. Now
+   ⚠️ The sender is Resend's shared `onboarding@resend.dev`, which delivers **only** to the Resend account
+   owner's address. A second recipient needs a verified sending domain — use a subdomain such as
+   `notify.blackswancausallabs.com` so the root domain's Google Workspace records are never touched.
+   Raised and dropped 2026-08-10.
+5. **Tidy the 8 published revision rationales.** They read as raw survey answers — one begins *"Yes."*. Now
    editable in the admin panel; edit, rebuild the payload, sync `public-deploy`.
-4. **Six "August 2026" completion dates record when the tactic was logged, not finished** (2.1.2, 2.1.3,
+6. **Six "August 2026" completion dates record when the tactic was logged, not finished** (2.1.2, 2.1.3,
    2.1.6, 3.1.3, 6.1.2, 7.1.2). The dashboard shows all nine August dates identically. Footnote them, blank
    them, or leave as-is — a decision, not a bug.
-5. **Three committees have not reported this cycle** — Executive/Impact, Finance, Global Development /
+7. **Three committees have not reported this cycle** — Executive/Impact, Finance, Global Development /
    Strategic Planning. Their tactics carried forward and are flagged at-risk as unreconfirmed.
-6. **Make admin's Save message honest.** It says "Saved in this browser only", but `ispe_sp_data` is written
+8. **Make admin's Save message honest.** It says "Saved in this browser only", but `ispe_sp_data` is written
    and never read back, so edits are gone on reload. Less urgent than it was — `review-site/` is read-only and
    never runs admin's Save — but still a live trap for anyone who opens `admin.html` without the helper.
-7. ~~Absorb the new CSV format~~ / ~~publish the August cycle~~ / ~~keep notes off the public site~~ /
+9. ~~Absorb the new CSV format~~ / ~~publish the August cycle~~ / ~~keep notes off the public site~~ /
    ~~complete the completion dates~~ / ~~the emblem~~ — **all done 2026-08-09/10 and live.**
 
 ## The August cycle (what just happened)
