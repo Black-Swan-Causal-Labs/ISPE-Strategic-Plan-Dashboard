@@ -1398,40 +1398,20 @@ function renderAtRisk() {
 function renderSummary() {
   const counts = getStatusCounts();
   const total = Object.values(counts).reduce((a,b) => a+b, 0);
-  // Count revised/new across the same filtered scope used by getStatusCounts.
-  //  1. "Revised / New" means revised OR new-in-plan. Two tactics (1.2.4,
-  //     1.2.5) carry both flags, so they are counted once, not twice.
-  //  2. Entries in `new_tactics` are free-text survey suggestions with NO
-  //     status field. They cannot belong to "Delayed" or "Completed", so they
-  //     must not be added when the view is narrowed to a single status.
-  let revisedCount = 0;
-  const statuslessCountable = !searchHits
-    && (currentFilter === 'all' || currentFilter === 'Revised');
-  data.objectives.forEach(o => o.goals.forEach(g => {
-    // Retired tactics are excluded here too, so every card describes the same
-    // active population. The Revisions section below still lists them, because
-    // being retired IS the revision being documented.
-    activeTactics(g).forEach(t => {
-      if ((t.is_revised || t.is_new_in_plan) && tacticVisible(t)) revisedCount++;
-    });
-    if (statuslessCountable) revisedCount += (g.new_tactics || []).length;
-  }));
   const stats = [
     { label: 'Total',       count: total,                              color: 'var(--header-bg)' },
     { label: 'Not Started', count: counts['Not Started'] || 0,         color: 'var(--not-started)' },
     { label: 'On Track',    count: counts['In Progress - On Track']||0, color: 'var(--on-track)' },
     { label: 'Delayed',     count: counts['In Progress - Delayed']||0,  color: 'var(--delayed)' },
     { label: 'Completed',   count: counts['Completed'] || 0,           color: 'var(--completed)' },
-    { label: 'Revised / New', count: revisedCount,                     color: 'var(--changed)', overlay: true },
   ];
   const retiredTotal = (data.objectives || []).reduce((n, o) =>
     n + o.goals.reduce((m, g) => m + (g.tactics || []).filter(isRetired).length, 0), 0);
   const note = `<div class="summary-note">`
-    + `<span class="sn-star">*</span> The four statuses above sum to Total (${total}). `
+    + `The four statuses above sum to Total (${total}). `
     + (retiredTotal ? `${retiredTotal} retired tactic${retiredTotal === 1 ? ' is' : 's are'} excluded from every figure here `
         + `(see the note under the tracker). ` : '')
-    + `Revised / New is a separate overlay tag: a revised tactic also carries one of those four statuses, `
-    + `and newly added tactics are counted here too, so it sits outside the total.</div>`;
+    + `Revised and new tactics are listed separately in Revisions &amp; New Tactics below.</div>`;
   document.getElementById('summaryRow').innerHTML = stats.map(s =>
     `<div class="stat${s.overlay ? ' overlay' : ''}"><span class="dot" style="background:${s.color}"></span><span class="num">${s.count}</span><span class="lbl">${s.label}${s.overlay ? '<span class="sn-star">*</span>' : ''}</span></div>`
   ).join('') + note;
@@ -1544,7 +1524,7 @@ function drawDonut(canvas, statuses, colors, values, total, progress) {
   ctx.fillText(total, cx, cy - 7);
   ctx.font = '600 9px ' + CANVAS_FONT_STACK;
   ctx.fillStyle = '#6b7c93';
-  ctx.fillText('EFFORTS', cx, cy + 12);
+  ctx.fillText('TACTICS', cx, cy + 12);
 }
 
 function wireChartHover(canvas) {
