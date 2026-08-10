@@ -67,8 +67,15 @@ HTML_PATH = HERE / "index.html"
 OUT_PATH = HERE / "data.json"
 
 
+# Filename conventions seen so far, newest-by-mtime wins across all of them.
+# 'SP Plan-SurveyExport.csv' is deliberately NOT matched: it is the retired
+# April format with a different column count, and picking it up by accident
+# would mis-attribute every answer rather than fail.
+CSV_GLOBS = ("SP Reports*.csv", "[0-9]*-SurveyExport.csv")
+
+
 def resolve_csv_path(argv):
-    """CSV path from argv, else the newest SP Reports*.csv beside this script."""
+    """CSV path from argv, else the newest recognized export beside this script."""
     args = [a for a in argv[1:] if not a.startswith("--")]
     if args:
         p = Path(args[0])
@@ -77,10 +84,13 @@ def resolve_csv_path(argv):
         if not p.exists():
             sys.exit(f"CSV not found: {p}")
         return p
-    candidates = sorted(HERE.glob("SP Reports*.csv"), key=lambda p: p.stat().st_mtime)
+    candidates = sorted(
+        (p for pat in CSV_GLOBS for p in HERE.glob(pat)),
+        key=lambda p: p.stat().st_mtime,
+    )
     if not candidates:
         sys.exit(
-            "No CSV given and no 'SP Reports*.csv' found in "
+            f"No CSV given and nothing matching {' or '.join(CSV_GLOBS)} found in "
             f"{HERE}.\nUsage: python3 csv_to_dashboard_json.py <report.csv>"
         )
     return candidates[-1]
@@ -187,17 +197,57 @@ RETIRED = {
     "3.1.7": {"as_of": "July 2026", "superseded_by": "3.1.8"},
 }
 
+# When each completed tactic was completed. The export records what a status is
+# but never when it changed, so - like RETIRED - these dates are curated and
+# live here rather than in data.json, where a regeneration would drop them.
+# Applied only to tactics the survey still reports as Completed; a tactic listed
+# here that comes back as anything else is a conflict and is reported, not
+# silently dated.
+COMPLETED_AT = {
+    "3.1.1": "October 2025",
+    "3.2.1": "October 2025",
+    "3.2.6": "October 2025",
+    "4.2.1": "October 2025",
+    "6.2.2": "October 2025",
+    "6.2.4": "October 2025",
+    "6.2.5": "October 2025",
+    "8.2.6": "October 2025",
+    "1.2.1": "February 2026",
+    "2.1.1": "February 2026",
+    "3.1.2": "February 2026",
+    "5.3.4": "February 2026",
+    "6.1.1": "February 2026",
+    "6.2.3": "February 2026",
+    "7.1.1": "February 2026",
+    "7.1.3": "February 2026",
+    "8.2.1": "February 2026",
+    "8.2.7": "February 2026",
+}
+
 # Where the baked-in is_revised / is_new_in_plan flags came from. Rendered as
 # the date on those items, which was previously hardcoded in the page markup.
 TRACKER_LABEL = "March 2026"
 
 
 def cycle_date_from_filename(path):
-    """('2026-07-30', 'July 2026') from 'SP Reports 7.30.2026.csv', else (None, None).
+    """('2026-08-04', 'August 2026') from the filename, else (None, None).
 
-    The report export carries no dates at all, so the filename is the only
-    evidence of when a cycle was collected.
+    The export carries no dates at all, so the filename is the only evidence of
+    when a cycle was collected. Two conventions have arrived so far:
+        'SP Reports 7.30.2026.csv'         M.D.YYYY
+        '20260804134803-SurveyExport.csv'  a YYYYMMDDHHMMSS export stamp
+    The second returned no match until 2026-08-09, which would have dated the
+    whole August cycle as None - and an undated cycle renders as a clean page
+    with the dates simply missing, so nothing would have looked wrong.
     """
+    stamp = re.match(r"(20\d{2})(\d{2})(\d{2})\d*(?:\D|$)", path.name)
+    if stamp:
+        year, month, day = (int(x) for x in stamp.groups())
+        try:
+            d = datetime(year, month, day)
+        except ValueError:
+            return None, None
+        return d.date().isoformat(), d.strftime("%B %Y")
     m = re.search(r"(\d{1,2})[.\-/](\d{1,2})[.\-/](20\d{2})", path.name)
     if not m:
         return None, None
@@ -451,6 +501,7 @@ def main():
     # Counters for the end-of-run report.
     stats = {"from_csv": 0, "carried_forward": 0, "from_plan": 0}
     unmapped = []          # status cells that matched no known value
+    completion_conflicts = []   # curated completion date vs. a non-Completed status
     responders_all = set()
 
     # The as-of date is curated in the admin panel and cannot be derived from a
@@ -638,6 +689,23 @@ def main():
                     tactic_out["revised_description"] = rev_desc
                 if rev_when:
                     tactic_out["revised_at"] = rev_when
+                if tid in COMPLETED_AT:
+                    if status == "Completed":
+                        tactic_out["completed_at"] = COMPLETED_AT[tid]
+                    else:
+                        completion_conflicts.append((tid, COMPLETED_AT[tid], status))
+                elif status == "Completed":
+                    # Not curated, so derive it: keep a date already established,
+                    # otherwise stamp this cycle if the tactic became Completed
+                    # during it. A tactic that was already Completed and already
+                    # undated stays undated — inventing a date is worse than a
+                    # blank, and this is how completions after the curated set
+                    # date themselves without anyone maintaining COMPLETED_AT.
+                    carried = (prev or {}).get("completed_at")
+                    if carried:
+                        tactic_out["completed_at"] = carried
+                    elif prev and prev.get("status") not in (None, "", "Completed") and cycle_label:
+                        tactic_out["completed_at"] = cycle_label
                 if tid in RETIRED:
                     tactic_out["is_retired"] = True
                     tactic_out["retired_as_of"] = RETIRED[tid]["as_of"]
@@ -741,6 +809,23 @@ def main():
         print(f"  ! {len(unmapped)} status cell(s) matched no known value — review these:")
         for tid, who, v in unmapped:
             print(f"      {tid}  [{who}]  {v[:90]!r}")
+
+    # Completion dates are curated, so drift between them and the survey is the
+    # thing worth surfacing: a tactic completed on paper but reported otherwise,
+    # and completed tactics nobody has dated yet.
+    every_tactic = [t for o in out["objectives"] for g in o["goals"] for t in g["tactics"]]
+    dated = sorted(t["tactic_id"] for t in every_tactic if t.get("completed_at"))
+    undated = sorted(t["tactic_id"] for t in every_tactic
+                     if t.get("status") == "Completed" and not t.get("completed_at")
+                     and not t.get("is_retired"))
+    print(f"  completion dates: {len(dated)} dated, {len(undated)} completed without one")
+    if undated:
+        print(f"      no completion date: {', '.join(undated)}")
+    if completion_conflicts:
+        print(f"  ! {len(completion_conflicts)} tactic(s) have a curated completion date but "
+              f"did not come back Completed — date withheld, review COMPLETED_AT:")
+        for tid, when, status in completion_conflicts:
+            print(f"      {tid}  dated {when}  but reported {status!r}")
 
 
 if __name__ == "__main__":
