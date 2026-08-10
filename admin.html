@@ -736,6 +736,26 @@
   }
   .notes-input:focus { outline: none; border-color: var(--not-started); }
 
+  /* Revision rationale. Unlike notes this IS published, so it is edited here
+     to be tidied rather than to be kept private - the survey delivers it as a
+     raw answer, typos and all. Keeps the left rule of the read-only version so
+     the panel still reads as a quotation of the committee. */
+  .revision-detail-input {
+    width: 100%;
+    min-height: 30px;
+    margin-top: 5px;
+    padding: 5px 9px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    color: var(--text-light);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--changed);
+    border-radius: 0 6px 6px 0;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+  .revision-detail-input:focus { outline: none; border-color: var(--changed); }
+
   /* Progress slider */
   .progress-slider {
     width: 80px;
@@ -1636,7 +1656,9 @@ function renderChanges() {
       <div style="padding:12px 0;border-bottom:1px solid #f0f2f5;font-size:0.83rem;">
         <div style="font-weight:600;color:${changedColor};margin-bottom:4px;">Tactic ${esc(r.tactic_id)} <span style="color:var(--text-light);font-weight:500;">(Goal ${esc(r.goal_id)})</span>${r.retired ? ` <span class="retired-badge">Retired</span>` : ''}</div>
         <div style="color:var(--text);">${esc(r.description)}</div>
-        ${r.detail ? `<div style="color:var(--text-light);font-size:0.78rem;margin-top:5px;padding-left:10px;border-left:2px solid var(--border);">${esc(r.detail)}</div>` : ''}
+        <textarea class="revision-detail-input" data-revision-detail="${esc(r.tactic_id)}"
+          placeholder="Rationale — this text is published on the public dashboard"
+          onchange="updateRevisionDetail(this.dataset.revisionDetail, this.value)">${esc(r.detail)}</textarea>
         <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">
           ${r.by ? `Owner: <strong>${esc(r.by)}</strong>` : ''}${r.by && r.when ? '; ' : ''}${r.when ? `Documented in <strong>${esc(r.when)}</strong>` : ''}
         </div>
@@ -2039,6 +2061,26 @@ function updateStatus(oi, gi, ti, val, el) {
 function updateNotes(oi, gi, ti, val) {
   data.objectives[oi].goals[gi].tactics[ti].notes = val;
   autoSave();
+}
+
+// The revisions panel is built from a flattened list, so the tactic is found by
+// id rather than by index. Blank clears the key instead of storing "", which
+// keeps the published payload free of empty fields the dashboard would render
+// as an empty quotation.
+function updateRevisionDetail(tacticId, val) {
+  const v = (val || '').trim();
+  for (const o of data.objectives) {
+    for (const g of o.goals) {
+      for (const t of g.tactics) {
+        if (t.tactic_id === tacticId) {
+          if (v) t.revised_description = v;
+          else delete t.revised_description;
+          autoSave();
+          return;
+        }
+      }
+    }
+  }
 }
 
 function updateProgress(oi, gi, val) {
