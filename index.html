@@ -131,8 +131,6 @@
   .section-heading { font-size: 1.4rem; }
 
   .goal-meta,
-  .notes-text,
-  .notes-empty,
   .tactics-table { font-size: 0.88rem; line-height: 1.45; }
   .tactics-table th,
   .summary-card .label,
@@ -563,10 +561,6 @@
     .status-badge { border: 2px solid CanvasText; color: CanvasText; background: Canvas; }
     .legend-dot, .summary-inline .stat .dot { border: 1px solid CanvasText; }
   }
-
-  /* Notes read-only */
-  .notes-text { font-size: 0.8rem; color: var(--text); line-height: 1.4; }
-  .notes-empty { font-size: 0.8rem; color: var(--text-light); }
 
   /* Toast */
   .toast {
@@ -1559,11 +1553,13 @@ function renderGoal(goal, oi, gi) {
     </div>
     <div class="goal-body">
       <table class="tactics-table">
+        <!-- No Notes column: the survey's free-text notes are internal. They are
+             also stripped from the published data.json by build_public_payload.py,
+             because a hidden column is not privacy when the file is fetchable. -->
         <thead><tr>
           <th style="width:70px">ID</th>
           <th>Description</th>
           <th style="width:180px">Status</th>
-          <th style="width:200px">Notes</th>
         </tr></thead>
         <tbody>
           ${goal.tactics.map((t) => renderTactic(t)).join('')}
@@ -1611,15 +1607,11 @@ function renderTactic(t) {
   const statusCell = retired
     ? `<span style="color:var(--text-light);font-style:italic;">Retired<span class="sn-star">&dagger;</span></span>`
     : statusBadgeHTML(t.status) + completedWhen;
-  const notesHTML = t.notes
-    ? `<span class="notes-text">${esc(t.notes)}</span>`
-    : `<span class="notes-empty">—</span>`;
   return `
   <tr class="${visible ? '' : 'hidden'}${retired ? ' tactic-retired' : ''}" data-tactic>
     <td class="tactic-id" data-label="ID">${t.tactic_id || '-'}${revBadge}${newBadge}${retBadge}</td>
     <td data-label="Tactic">${esc(t.description)}</td>
     <td data-label="Status">${statusCell}</td>
-    <td data-label="Notes">${notesHTML}</td>
   </tr>`;
 }
 
@@ -1636,7 +1628,9 @@ function buildSearchIndex() {
     o.goals.forEach(g => {
       const goalHay = `${g.goal_id || ''} ${g.description || ''} ${g.responsible_committee || ''}`.toLowerCase();
       g.tactics.forEach(t => {
-        const tacHay = `${t.tactic_id || ''} ${t.description || ''} ${t.notes || ''} ${t.status || ''}`.toLowerCase();
+        // Notes are deliberately absent from the public payload, so they are
+        // not searchable here either.
+        const tacHay = `${t.tactic_id || ''} ${t.description || ''} ${t.status || ''}`.toLowerCase();
         const haystack = objHay + ' ' + goalHay + ' ' + tacHay;
         if (searchTokens.every(tok => haystack.includes(tok))) {
           searchHits.add(t.tactic_id);

@@ -7,6 +7,7 @@
 !data.json
 !csv_to_dashboard_json.py
 !admin-server.py
+!build_public_payload.py
 !docs/
 !docs/*.md
 # Self-hosted Source Serif 4 (SIL Open Font License 1.1). Committed rather than
@@ -17,3 +18,8 @@
 !fonts/LICENSE.txt
 # NOTE: SP Plan-SurveyExport.csv is intentionally NOT allowlisted — it contains
 # respondent PII (names, emails, IPs). Keep it out of the repo.
+# NOTE: the newer exports (SP Reports*.csv, *-SurveyExport.csv) carry no PII, but
+# they do carry free-text committee answers that are not published. They stay out
+# of this repo until it is private — see docs/MIGRATION-private-repo.md.
+# NOTE: public/ is the generated public payload (build_public_payload.py). It is a
+# build artifact, not source, and is rebuilt on every publish.
