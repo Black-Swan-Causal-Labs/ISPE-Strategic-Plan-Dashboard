@@ -123,10 +123,18 @@ intended to be embedded on the ISPE website as an `<iframe>`. No backend — eve
 <div style="max-width:1200px; margin:0 auto;">
   <iframe src="https://ispe-sp.github.io/ISPE-Strategic-Plan-Dashboard/"
     title="ISPE Strategic Plan Progress Dashboard" loading="lazy"
-    style="width:100%; height:1400px; border:0; border-radius:8px;" referrerpolicy="no-referrer"></iframe>
+    style="width:100%; height:1800px; border:0; border-radius:8px;" referrerpolicy="no-referrer"></iframe>
 </div>
 ```
-Paste into a "Custom HTML" block. GitHub Pages allows external iframing.
+Paste into a "Custom HTML" block. GitHub Pages allows external iframing. The page detects
+framing itself and un-pins its sticky chrome, so the host page needs to add nothing.
+
+**On the height.** Measured collapsed content, 2026-08-10: 1742px at 1200px wide, 1927 at 900,
+1986 at 760, 1988 at 600, 2708 at 414, 2910 at 380. The old value of 1400px was shorter than
+the desktop view and scrolled inside the frame — the nested-scroll problem the embedded mode
+exists to avoid. 1800px clears the desktop collapsed view. **No fixed height fits every case**:
+phones and any expanded objective will still scroll within the frame. Only a postMessage
+resizer fixes that exactly, and it requires the host page to cooperate.
 
 ## Data pipeline (how the dashboard gets its numbers)
 1. **Plan structure** (the list of objectives/goals/tactics, plus `is_revised` / `is_new_in_plan` flags)
