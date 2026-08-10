@@ -2,9 +2,15 @@
 *
 !index.html
 !data.json
-!newlogo.jpg
 !README.md
 !.gitignore
+# Images index.html references by relative path. Both must be allowlisted or the
+# page ships with a broken logo and no header photograph — the same way fonts/
+# was once omitted and the typeface silently fell back to Georgia.
+# ispe-emblem.png is a transparent PNG: its white brushed ring only reads
+# against the dark header, and it must not be given a white backing.
+!ispe-emblem.png
+!banner picture.jpg
 # Self-hosted Source Serif 4 (SIL OFL 1.1). index.html references these by
 # relative path — without them the dashboard silently falls back to Georgia.
 !fonts/

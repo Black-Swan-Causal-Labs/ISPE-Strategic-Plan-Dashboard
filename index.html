@@ -150,7 +150,10 @@
     background-position: center right;
     background-repeat: no-repeat;
     color: white;
-    padding: 20px 32px;
+    /* No vertical padding: the emblem is what sets the header's height, so the
+       brushed ring meets the top and bottom edges instead of floating inside
+       them. Horizontal padding still applies. */
+    padding: 0 32px;
     display: flex;
     align-items: center;
     gap: 24px;
@@ -159,7 +162,11 @@
     top: 0;
     z-index: 100;
   }
-  .header img { height: 80px; }
+  /* The emblem is a transparent PNG and deliberately has no white backing —
+     the ring itself is the shape, and a white chip behind it would erase the
+     effect entirely. display:block removes the inline-baseline gap that would
+     otherwise stop it sitting flush. */
+  .header img { height: 180px; display: block; }
   .header-text h1 { font-size: 1.4rem; font-weight: 600; }
   .header-text p { font-size: 0.85rem; opacity: 0.8; }
   .goal.flash { animation: goalFlash 1.6s ease; }
@@ -662,7 +669,9 @@
   /* Responsive */
   @media (max-width: 900px) {
     .chart-filter-row { grid-template-columns: 1fr; }
-    .header { flex-wrap: wrap; padding: 16px; }
+    /* Still flush, just shorter — the emblem keeps setting the height. */
+    .header { flex-wrap: wrap; padding: 0 16px; }
+    .header img { height: 140px; }
     .obj-progress-wrap, .obj-status-pills { display: none; }
     .goal-committee { display: none; }
     .container { padding: 16px; }
@@ -670,8 +679,10 @@
   }
 
   @media (max-width: 640px) {
+    /* Below this width the header wraps and the emblem no longer defines the
+       height, so flush stops meaning anything — vertical padding comes back. */
     .header { padding: 12px; gap: 12px; position: static; }
-    .header img { height: 56px; }
+    .header img { height: 88px; }
     .header-text h1 { font-size: 1.1rem; }
     .header-text p { font-size: 0.75rem; }
     .container { padding: 12px; }
@@ -741,7 +752,7 @@
 
 
 <div class="header">
-  <img src="newlogo.jpg" alt="ISPE Logo" style="background:white;padding:6px 10px;border-radius:6px;">
+  <img src="ispe-emblem.png" alt="ISPE — International Society for Pharmacoepidemiology">
   <div class="header-text">
     <h1>Strategic Plan Progress Tracker</h1>
     <p>2024-2029 | As of <span id="asOfDate">February 2026</span></p>
