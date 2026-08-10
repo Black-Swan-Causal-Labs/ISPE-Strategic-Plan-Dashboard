@@ -49,7 +49,7 @@ Black-Swan-Causal-Labs/ISPE-Strategic-Plan-Dashboard   [PRIVATE]   the working r
         |  Action: build public payload, push over SSH deploy key
         v
 ISPE-SP/<public repo name>                             [PUBLIC]    deploy target only
-  index.html, data.json, fonts/, newlogo.jpg, banner picture.jpg, README.md
+  index.html, data.json, fonts/, ispe-emblem.png, banner picture.jpg, README.md
   Pages enabled on the default branch
         |
         v
@@ -86,7 +86,7 @@ Ordered so the live site never goes dark and every step is reversible until Phas
 
 ### Phase 1 — stand up the public deploy repo (current site stays live)
 - Create the public repo under the chosen owner.
-- Seed it with the current public payload: `index.html`, `data.json`, `fonts/`, `newlogo.jpg`,
+- Seed it with the current public payload: `index.html`, `data.json`, `fonts/`, `ispe-emblem.png`,
   `banner picture.jpg`, `README.md`.
 - Enable Pages on its default branch. Confirm the site renders and `admin.html` 404s.
 - **Do not point ISPE IT at it yet.**

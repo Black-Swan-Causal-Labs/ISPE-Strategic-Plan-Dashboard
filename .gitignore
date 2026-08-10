@@ -1,7 +1,10 @@
 # Only track dashboard files
 *
 !index.html
-!newlogo.jpg
+# The header emblem: a transparent PNG whose white brushed ring only reads
+# against the dark header. Sourced from coffee stain logo.pptx, NOT from the
+# flattened jpg export, which put a white ring on white and erased it.
+!ispe-emblem.png
 !.gitignore
 !admin.html
 !data.json
