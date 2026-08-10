@@ -387,3 +387,139 @@ Replaces "ISPE forks, ISPE hosts" at the top of this file. Full plan in `MIGRATI
   upload and fail closed rather than trust it.
 - **BSCL is on the Team plan** (Pages on private repos, Actions, Codespaces all available). The repo has 0
   forks / 0 stars / 0 watchers, so going private retracts nothing.
+
+# 2026-08-09/10 — August cycle, notes off the public site, the emblem
+
+## The filename convention changed; the format did not
+`20260804134803-SurveyExport.csv` arrived as a third naming convention. The *columns* were byte-identical to
+the 7.30 export, so no parser work was needed — but two things would have failed silently:
+- **`cycle_date_from_filename` matched only `M.D.YYYY`** and returned `(None, None)`, which would have dated
+  the entire cycle `null`. An undated cycle renders as a clean page with the dates merely absent; nothing
+  looks wrong. It now reads a leading `YYYYMMDD` stamp as well.
+- **The default glob was `SP Reports*.csv`**, which does not match the new name, so running the documented
+  no-argument command would have re-ingested **July** while appearing to work. `CSV_GLOBS` now covers both
+  conventions and deliberately excludes `SP Plan-SurveyExport.csv`, the retired 404-column April format.
+
+## The August file supersedes July rather than merging onto it
+All six July committee rows appear **byte-identical** in the August export, plus six more. Executive answered
+twice: the two rows are complementary, not contradictory — 16 columns filled only by the first, 22 only by
+the second, **zero where both are filled and disagree** — so `pick_value` assembles them correctly with no
+rule needed. 11 committees reported; **Executive/Impact, Finance and Global Development / Strategic Planning
+did not**, and their tactics carried forward.
+
+## Completion dates: curated for history, self-dating from here
+The export records what a status *is*, never when it changed. So `COMPLETED_AT` in
+`csv_to_dashboard_json.py` holds the dates — beside `RETIRED`, and for the same reason: **in the script, not
+in `data.json`, so a regeneration cannot quietly drop them.**
+- Tactics that **transition** to Completed during a cycle are stamped with that cycle automatically. This is
+  the mechanism going forward; the dict should not need maintaining again.
+- A tactic listed in `COMPLETED_AT` that comes back as anything other than Completed is **reported, not
+  silently dated**.
+- **Six dates record when the tactic was logged, not when it was finished.** 2.1.2, 2.1.3, 2.1.6, 3.1.3,
+  6.1.2 and 7.1.2 were already Completed before August, with `last_reported_at` `null` — no survey ever
+  reported them and no earlier date exists. They are dated August 2026 at the user's direction. **The
+  dashboard shows all nine August dates identically**, so a reader will take all nine as work finished this
+  cycle. If that distinction ever matters, the honest options are a footnote or leaving those six blank.
+
+## Notes are internal — stripped from the payload, not hidden in the page
+Committee notes are written for internal reporting ("not started due to the expected completion date…"), and
+ISPE does not publish them. **Removing the Notes column would not have made them private:** `index.html`
+fetches `data.json` over HTTP, so the file is readable directly — and 28 notes were sitting at the live
+site's own `/data.json` until this was fixed.
+- `build_public_payload.py` strips them from the file that ships and **refuses to emit a file that still
+  contains them**. Its `--check` mode is the assertion the publish step runs; verified in both directions
+  (fails on the working `data.json`, passes on the generated payload).
+- **The public payload is a build artifact under `public/`, rebuilt every publish, never committed.** The
+  previous model — copy `data.json` across from `main` — is now the single action that would put the notes
+  back on the public site. The `public-deploy` README says so explicitly.
+- The notes remain readable in `main`'s `data.json`, which is a public repo. The user reviewed all 28 and
+  judged them benign; git history keeps them regardless. Going private closes this, not the build step.
+
+## Revision rationale is published, so it is edited rather than stripped
+`revised_description` is the same raw survey free text as notes, but it reaches the public **Revisions & New
+Tactics** panel, which is a deliberate feature. It was publishing unedited answers — *"the ISPE Manuscript
+Initiative was on hold the precious year"*, a fragment reading *"overcome and included in the new tactic
+3.1.8"*, and one entry that is literally the answer to a yes/no question, beginning *"Yes."*. This is a
+presentation problem, not a disclosure one, so the fix was to make it **editable in the admin panel** on
+every revised tactic (not only those that already have text), with a placeholder stating the text is
+published. Clearing the field deletes the key rather than storing `""`, so the payload carries no empty
+fields the dashboard would render as an empty quotation.
+
+## A failed data load must announce itself
+When `data.json` cannot be read, both pages fall back to the inline `DEFAULT_DATA` — a complete, plausible
+and **wrong** dashboard: February 2026, 18 Completed against the 27 that are real, no retirements. The only
+signal was a `console.warn` nobody opens. Anyone downloading `admin.html` from the public repo and opening it
+got exactly this. Both pages now render a sticky banner above everything, naming the cause (`file://` vs an
+HTTP status) and the snapshot's own date, **read from `DEFAULT_DATA`** so it stays honest if that snapshot is
+ever refreshed. Verified by serving both pages from a directory with no `data.json`.
+
+## The as-of field was write-only
+`dateInput` was never populated on load — written on change, never read back — so the admin panel never
+displayed the date it was about to publish. **That is the mechanism behind `as_of_date` sitting on April
+while the data said July.** It now renders the current value; the month-name list is shared rather than
+duplicated between the setter and the parser.
+
+## The emblem came from the pptx, not the jpg
+The supplied `coffee stain logo.jpg` looked like a plain logo with a faint smudge — 608 tinted pixels, 7%
+luminance difference. That was **JPEG flattening**, not the artwork: the PNG inside `coffee stain logo.pptx`
+is RGBA (50.5% fully transparent, 49.5% partial alpha, three pixels opaque) and the "stain" is a **bold white
+brushed ring**. Exported to JPEG it became white-on-white and vanished.
+- The asset is cropped to its artwork (the source carried ~35px of empty pixels top and bottom, so uncropped
+  the *image* would meet the header edge while the ring floated inside it), sized for a 180px slot and
+  palette-quantised: **146 KB → 16.5 KB**, with no pixel differing by more than 16/255 at render size.
+- **The header has no vertical padding**, so the emblem sets its height and the ring meets both edges. The
+  white chip the old logo sat on is gone — it would have put a white rectangle behind a transparent ring.
+- Steps 180 → 140px below 900px; at 640px the header wraps, the emblem stops defining the height, and
+  vertical padding returns at 88px. Checked at 1200 / 860 / 600 / 380.
+- The **read-only export inlines the emblem as a data URI**. That document is emailed as a single file, so a
+  relative `src` rendered as a broken image the moment it left the folder.
+- `newlogo.jpg` and `ISPE Logo.jpg` are retired — byte-identical duplicates of each other, `index.html` used
+  one and `admin.html` the other.
+
+## `public-deploy`'s allowlist is a live hazard, not paperwork
+That branch ignores everything by default, so an asset that is not allowlisted is **absent from the deploy
+and 404s on the live site with nothing failing anywhere**. `banner picture.jpg` was in exactly that state —
+tracked from before the allowlist tightened, but never allowlisted, so it would not have survived being
+untracked once. Both it and `ispe-emblem.png` are named explicitly now. This is the same failure that lost
+`fonts/` on 2026-07-27.
+
+## The documented embed height was shorter than the page
+The snippet specified `height:1400px`; the collapsed page measures **1742px at 1200px wide** (1927 at 900,
+1986 at 760, 1988 at 600, 2708 at 414, 2910 at 380). It was scrolling *inside* the frame — the nested-scroll
+problem `is-embedded` exists to avoid — and the header had grown 120 → 180px with the emblem. Now 1800px.
+**No fixed height fits every case**: phones and any expanded objective scroll within the frame regardless.
+Only a postMessage resizer fixes that exactly, and it needs the host page to cooperate, which this design
+deliberately avoids requiring.
+
+## The fork is back — as an acknowledged stopgap, not a reversal
+The 2026-08-03 reasoning stands: forks do not auto-update, and "Sync fork" puts the slowest-moving party on
+the critical path with a silent failure mode. But the migration has not run, the repo is **still public**, and
+ISPE wants a branded URL now — and a fork of a *public* repo is public and Pages-servable on a free personal
+account. So ISPE-SP forks, enables Pages on `public-deploy`, and IT embeds `ispe-sp.github.io`.
+- **Verified 2026-08-10: no fork exists.** `forks_count` and `network_count` are both 0, the forks list is
+  empty, and ISPE-SP has 0 public repos. An earlier belief that they had forked "last week" was mistaken.
+- **This unwinds at migration.** Confirmed against the docs: making a public repo private **detaches existing
+  public forks into a new network**, so theirs permanently loses the ability to sync. The fork is a thing to
+  tear down, not a foundation to build on.
+- **The failure mode to watch is Pages on `main`**, which would publish `admin.html` and the notes under
+  ISPE's own URL. The handoff note therefore makes "confirm `/admin.html` returns 404" an explicit step and
+  tells them not to share the address if it does not.
+
+## A hosted admin is under consideration, and would supersede the Codespace step
+Putting `admin.html` on Cloudflare Pages behind Access was raised. Assessment:
+- **Most of the panel already works unhosted** — the code was written for it (`admin.html`, "everything falls
+  back to the previous download-a-file behaviour"). Render, editing, Change Log, and **Publish** (which falls
+  back to downloading the self-contained export) all function. **Save is the trap**: it reports "Saved in this
+  browser only", but `ispe_sp_data` is written and never read back, so the edits are gone on reload. That
+  message must be made honest before anyone else uses a hosted copy.
+- **It beats the Codespaces plan on every axis** for review: no GitHub account needed (Access does email
+  OTP), no cost (Team orgs get *zero* free Codespaces quota), always current if Pages auto-deploys from the
+  repo, and no local Python. If this is built, the Codespace step in `MIGRATION-private-repo.md` — which
+  exists solely to give a reviewer a visual admin — becomes unnecessary.
+- **Whatever hosts admin must be fed working data, so the auth becomes the only thing protecting the notes.**
+- **Reviewer feedback needs shared server-side state**, not localStorage and not an emailed file, because the
+  requirement is "go in and see it". A Function backed by KV, keyed by cycle, with the commenter's identity
+  read from the Access JWT — which gives attribution for free. A mock of the review panel exists at
+  `review-panel-mock.html` (untracked): comment and flag on any tactic/goal/objective/panel, per-objective
+  reviewed checkboxes, an aggregated feed, and review state that **resets when the cycle label changes** so
+  an approval cannot silently carry onto data nobody saw.
