@@ -10,11 +10,11 @@ _Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last u
 >    `review-site/` is a Cloudflare Pages + Access + D1 app where reviewers comment, flag and approve, and
 >    everyone sees everyone's. **Complete review** emails you that reviewer's full summary — one mail per
 >    reviewer per cycle, which is the right volume for a site that moves twice a year.
->    **It is LIVE and gated:** https://ispe-sp-review.pages.dev — Cloudflare Access, verified end to end
->    2026-08-10 (signed in, wrote, read back and deleted against the production database). The one thing
->    left is the completion email: set `EMAIL_PROVIDER` / `EMAIL_API_KEY` / `EMAIL_FROM` /
->    `REVIEW_NOTIFY_TO` per `review-site/DEPLOY.md` step 6. Until then, pressing "Complete review" records
->    the review and tells the reviewer plainly that no email went out.
+>    **It is LIVE, gated and complete:** https://ispe-sp-review.pages.dev — Cloudflare Access, verified end
+>    to end 2026-08-10, including a real completion email delivered via Resend to
+>    the configured recipient (`submissions.delivery = 'sent'`). Test rows were cleared
+>    afterwards, so the August 2026 board is empty and ready for real reviewers.
+>    **Nothing is outstanding — the URL can be shared.**
 >    This supersedes the Phase-6 Codespace step in `MIGRATION-private-repo.md`.
 
 ## Start here (cold start)
@@ -50,10 +50,12 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
 **Open items** (as of 2026-08-10):
 1. **ISPE-SP forks + Pages on `public-deploy`** — see the handoff note below. The one thing that can go wrong
    is Pages pointed at `main`, which publishes `admin.html` and the committee notes under ISPE's URL.
-2. **Turn on the completion email for `review-site/`.** The site is deployed and gated
+2. **Share the reviewer site URL with ISPE.** Deployed, gated and fully working
    (https://ispe-sp-review.pages.dev, D1 `ispe-sp-review`, Access app "ISPE Strategic Plan Review",
-   policy "ISPE reviewers" = `@pharmacoepi.org` + 4 named addresses). Only the mail provider is unset —
-   see `review-site/DEPLOY.md` step 6. Review-only by design: reviewers cannot change a status or publish.
+   policy "ISPE reviewers" = `@pharmacoepi.org` + 4 named addresses; Resend sends the completion summary
+   to the configured recipient). Review-only by design: reviewers cannot change a status or
+   publish. Note the sender is Resend's shared `onboarding@resend.dev`, which delivers **only** to the
+   Resend account owner's address — adding a second recipient needs a verified domain.
    ⚠️ **`@ispe.org` is a different organisation** (International Society for Pharmaceutical Engineering);
    the pharmacoepidemiology society is `@pharmacoepi.org`. Do not "fix" the policy to `@ispe.org`.
 3. **Tidy the 8 published revision rationales.** They read as raw survey answers — one begins *"Yes."*. Now
