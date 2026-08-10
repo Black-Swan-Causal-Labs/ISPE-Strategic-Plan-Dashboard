@@ -122,11 +122,39 @@ In the Cloudflare dashboard → **Zero Trust** → **Access** → **Applications
   reviewer types their email, gets a 6-digit code, and is in. No account, no
   password to leak, and you can revoke one person without affecting anyone else.
 
+> ⚠️ **One-time PIN is only the default while you have NO identity provider at
+> all.** The moment any provider exists (this account already had a "Cloudflare"
+> one), the email-code option disappears from the login page and the only way in
+> is a Cloudflare account — which external reviewers do not have. It has to be
+> added explicitly: **Integrations → Identity providers → Add an identity
+> provider → One-time PIN**. This was hit on the real setup: the login page
+> offered only "Cloudflare" until it was added. Check the login page shows an
+> **Email** box and a **Send login code** button before telling anyone the URL.
+
 ### 5. Tell the API about Access
 
 Zero Trust → Access → Applications → your app → **Overview** → copy the
 **Application Audience (AUD) Tag**. Your team domain is on Zero Trust →
 **Settings** → it looks like `yourteam.cloudflareaccess.com`.
+
+Quicker, and it does not depend on the dashboard's layout: fetch the site and
+read both values out of the redirect it returns.
+
+```bash
+curl -sSI https://<your-site>/ | grep -i '^location:'
+```
+
+The host of that URL is the team domain, and its `kid=` parameter is the AUD
+tag. **Do not trust the team name printed on the login page** — on this account
+it shows a stale auto-generated name (`wandering-firefly-0501`) while the live
+one is `ispe-sp`. The authoritative check is which host actually serves the
+signing keys:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://<team>.cloudflareaccess.com/cdn-cgi/access/certs
+```
+
+200 means it is the real team domain; 404 means it is not.
 
 Cloudflare dashboard → **Workers & Pages** → your project → **Settings** →
 **Variables and Secrets**, add for **Production**:

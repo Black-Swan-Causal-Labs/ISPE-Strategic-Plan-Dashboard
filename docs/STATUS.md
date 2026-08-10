@@ -9,10 +9,13 @@ _Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last u
 > 2. **Deploy the reviewer site.** The hosted-admin question is **decided and built** (2026-08-10):
 >    `review-site/` is a Cloudflare Pages + Access + D1 app where reviewers comment, flag and approve, and
 >    everyone sees everyone's. **Complete review** emails you that reviewer's full summary — one mail per
->    reviewer per cycle, which is the right volume for a site that moves twice a year. It runs and is tested
->    locally; **nothing is deployed to Cloudflare yet**.
->    Follow `review-site/DEPLOY.md` — step 4 (Access) is what makes it private, and step 7 (verify) is the
->    part not to skip. This supersedes the Phase-6 Codespace step in `MIGRATION-private-repo.md`.
+>    reviewer per cycle, which is the right volume for a site that moves twice a year.
+>    **It is LIVE and gated:** https://ispe-sp-review.pages.dev — Cloudflare Access, verified end to end
+>    2026-08-10 (signed in, wrote, read back and deleted against the production database). The one thing
+>    left is the completion email: set `EMAIL_PROVIDER` / `EMAIL_API_KEY` / `EMAIL_FROM` /
+>    `REVIEW_NOTIFY_TO` per `review-site/DEPLOY.md` step 6. Until then, pressing "Complete review" records
+>    the review and tells the reviewer plainly that no email went out.
+>    This supersedes the Phase-6 Codespace step in `MIGRATION-private-repo.md`.
 
 ## Start here (cold start)
 
@@ -47,9 +50,12 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
 **Open items** (as of 2026-08-10):
 1. **ISPE-SP forks + Pages on `public-deploy`** — see the handoff note below. The one thing that can go wrong
    is Pages pointed at `main`, which publishes `admin.html` and the committee notes under ISPE's URL.
-2. **Deploy `review-site/`** — built and locally verified 2026-08-10, not yet on Cloudflare. See
-   `review-site/DEPLOY.md`. It is review-only by design: reviewers comment, flag and approve, but cannot
-   change a status or publish. The Phase-6 Codespace step in `MIGRATION-private-repo.md` is now dead.
+2. **Turn on the completion email for `review-site/`.** The site is deployed and gated
+   (https://ispe-sp-review.pages.dev, D1 `ispe-sp-review`, Access app "ISPE Strategic Plan Review",
+   policy "ISPE reviewers" = `@pharmacoepi.org` + 4 named addresses). Only the mail provider is unset —
+   see `review-site/DEPLOY.md` step 6. Review-only by design: reviewers cannot change a status or publish.
+   ⚠️ **`@ispe.org` is a different organisation** (International Society for Pharmaceutical Engineering);
+   the pharmacoepidemiology society is `@pharmacoepi.org`. Do not "fix" the policy to `@ispe.org`.
 3. **Tidy the 8 published revision rationales.** They read as raw survey answers — one begins *"Yes."*. Now
    editable in the admin panel; edit, rebuild the payload, sync `public-deploy`.
 4. **Six "August 2026" completion dates record when the tactic was logged, not finished** (2.1.2, 2.1.3,
