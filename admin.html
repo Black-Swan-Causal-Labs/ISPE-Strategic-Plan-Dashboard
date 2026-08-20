@@ -987,7 +987,7 @@
       <canvas id="statusChart" width="140" height="140"></canvas>
     </div>
     <div class="filter-card">
-      <h3>Filter Strategic Efforts</h3>
+      <h3>Filter Tactics</h3>
       <div class="filter-row">
         <button class="filter-btn active" data-status="all" onclick="setFilter('all', this)">All</button>
         <button class="filter-btn" data-status="Not Started" onclick="setFilter('Not Started', this)">Not Started</button>
@@ -2405,11 +2405,6 @@ function publishReadOnly() {
     objectives += '<details style="background:white;border-radius:10px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;"><summary style="padding:16px 20px;cursor:pointer;display:flex;align-items:center;gap:14px;list-style:none;font-size:0.93rem;"><div style="background:#1a2a3a;color:white;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">'+esc(obj.objective_number)+'</div><span style="font-weight:600;flex:1;">'+esc(obj.description)+'</span>'+progressBar(cc,tt,100)+'</summary><div style="padding:4px 20px 18px;">'+goals+'</div></details>';
   });
 
-  let revisedNew = 0;
-  data.objectives.forEach(o => o.goals.forEach(g => {
-    activeTactics(g).forEach(t => { if (t.is_revised || t.is_new_in_plan) revisedNew++; });
-    revisedNew += (g.new_tactics || []).length;
-  }));
   const retiredList = [];
   data.objectives.forEach(o => o.goals.forEach(g => (g.tactics||[]).forEach(t => {
     if (isRetired(t)) retiredList.push(t);
@@ -2422,14 +2417,15 @@ function publishReadOnly() {
       + '. Listed above for the record, excluded from all progress counts.</div>'
     : '';
   const summaryCards = [
-    {l:'Total Strategic Efforts',c:total,clr:'#2c3e50'},
+    {l:'Total Tactics',c:total,clr:'#2c3e50'},
     {l:'Not Started',c:counts['Not Started']||0,clr:'#64748b'},
     {l:'On Track',c:counts['In Progress - On Track']||0,clr:'#0284c7'},
     {l:'Delayed',c:counts['In Progress - Delayed']||0,clr:'#d97706'},
-    {l:'Completed',c:counts['Completed']||0,clr:'#16a34a'},
-    // Was counts['Changed'] — a status no tactic ever has, so this card always
-    // read 0. Counts distinct revised/new items instead, as the dashboard does.
-    {l:'Revised / New',c:revisedNew,clr:'#a02a93'}
+    {l:'Completed',c:counts['Completed']||0,clr:'#16a34a'}
+    // No 'Revised / New' card here: it is an overlay tag, not a fifth status,
+    // and sitting it beside the four read as a category (reviewer feedback,
+    // 2026-08-10). Removed from renderSummary() in 8d4cb42; this export builds
+    // its own copy of the list and was missed until 2026-08-20.
   // A colour dot rather than a 4px top border: the slab fought the rounded
   // corners, and the dot matches how the dashboard's own stat row reads.
   ].map(s=>'<div style="background:white;border-radius:10px;padding:14px 18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #e1e8ef;"><div style="width:10px;height:10px;border-radius:50%;background:'+s.clr+';margin:0 auto 8px;"></div><div style="font-size:1.8rem;font-weight:700;color:'+s.clr+';font-variant-numeric:tabular-nums;">'+s.c+'</div><div style="font-size:0.74rem;color:#6b7c93;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;">'+s.l+'</div></div>').join('');
