@@ -854,8 +854,21 @@
   }
 
   /* Responsive */
-  @media (max-width: 900px) {
+
+  /* Keep the donut beside the filters down to 600px rather than 900px. Below
+     900px the two cards used to stack, leaving a 140px donut alone in a
+     full-width box. index.html carries the same block and the same reasoning —
+     it is the one that gets embedded at ~760px, where this actually bit. */
+  @media (max-width: 900px) and (min-width: 600px) {
+    .chart-card { display: flex; flex-direction: column; }
+    .chart-card canvas { margin: auto; }
+    .filter-row .filter-btn { flex: 0 1 auto; }
+  }
+  @media (max-width: 600px) {
     .chart-filter-row { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 900px) {
     .header { flex-wrap: wrap; padding: 0 16px; }
     .header img { height: 140px; }
     .admin-panel-body { flex-direction: column; }

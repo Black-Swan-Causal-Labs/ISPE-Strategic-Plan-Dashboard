@@ -667,8 +667,27 @@
   }
 
   /* Responsive */
-  @media (max-width: 900px) {
+
+  /* Embedded in the ISPE page the content column is ~760px, which used to fall
+     under the 900px breakpoint below: the two cards stacked, and a 140px donut
+     sat alone in a full-width box with ~150px of dead space around it. They now
+     stay side by side down to 600px, which is where 170px + the filter buttons
+     genuinely stop fitting. Two supporting fixes at this width:
+       - the donut centres in whatever height the filter card sets, instead of
+         hanging at the top of a stretched grid cell;
+       - filter buttons size to their text. They are `flex: 1 1 auto` by default
+         so a full row divides evenly, but at this width they wrap, and a lone
+         wrapped button would stretch across an entire row on its own. */
+  @media (max-width: 900px) and (min-width: 600px) {
+    .chart-card { display: flex; flex-direction: column; }
+    .chart-card canvas { margin: auto; }
+    .filter-row .filter-btn { flex: 0 1 auto; }
+  }
+  @media (max-width: 600px) {
     .chart-filter-row { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 900px) {
     /* Still flush, just shorter — the emblem keeps setting the height. */
     .header { flex-wrap: wrap; padding: 0 16px; }
     .header img { height: 140px; }
