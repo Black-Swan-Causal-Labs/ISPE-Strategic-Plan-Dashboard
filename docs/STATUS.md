@@ -47,11 +47,11 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
 | BSCL Pages | serving **`public-deploy`** — `admin.html` 404 verified 2026-08-10 |
 | ISPE fork | **EXISTS and is correctly configured.** Forked 2026-08-10 15:23 UTC (hours after the line above was written). Pages on `public-deploy`, `admin.html` 404. `public-deploy` level with ours at `38fbcea` |
 | BSCL repo | **public**, Team plan, **1 fork** (ISPE-SP, since 2026-08-10), 0 stars / 0 watchers |
-| `review-site` | `3ee97f5` + **uncommitted working tree**, 7 commits ahead of `main`, not merged. The reviewer site, Daniela's two wording fixes, and the 3.1.4 renumbering |
+| `review-site` | pushed, **11 commits ahead of `main`, not merged.** The reviewer site, all three of Daniela's fixes, the 3.1.4 renumbering, and the embed layout fix |
 | Cloudflare | Pages `ispe-sp-review` + D1 `ispe-sp-review` + Access app "ISPE Strategic Plan Review" |
 | `new-csv-format-intake` | merged 2026-08-03 (`faa9a3d`); kept as a record only |
 
-**`review-site` has uncommitted changes (the 3.1.4 renumbering, 2026-08-20); the other branches are clean and pushed.** `review-site` is deliberately unmerged: it carries
+**Working tree clean, all branches pushed.** `review-site` is deliberately unmerged: it carries
 changes to `index.html` and `admin.html` that should reach the public site in a single publish, once the
 numbering question is settled.
 
