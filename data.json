@@ -11,7 +11,7 @@
     "cycle_date": "2026-08-04",
     "cycle_label": "August 2026",
     "tracker_label": "March 2026",
-    "generated_at": "2026-08-10T08:02:04",
+    "generated_at": "2026-08-20T08:19:13",
     "cycle_committees": [
       "Development",
       "Education",
@@ -351,17 +351,14 @@
             },
             {
               "tactic_id": "3.1.4",
-              "description": "Identify gaps (gaps and prioritization analysis), via survey that all community leaders will be invited to contribute; prioritize gaps based on finalized list of gaps.",
+              "description": "The management company in collaboration with the Executive committee and ISPE communities identifies gaps on an ongoing basis. Suitable solutions are developed and implemented ad hoc involving the interested parties in ISPE. All ISPE community leaders have the opportunity to report gaps or any other needs through a dedicated form.",
               "status": "Not Started",
               "is_revised": true,
               "is_new_in_plan": false,
               "last_reported_by": "Executive",
               "last_reported_at": "2026-02-27T08:44:26",
-              "revised_description": "overcome and included in the new tactic 3.1.8",
-              "revised_at": "2026-08-04",
-              "is_retired": true,
-              "retired_as_of": "July 2026",
-              "superseded_by": "3.1.8"
+              "revised_description": "Replaces the former tactic 3.1.4 and consolidates retired tactics 3.1.5-3.1.7 into a single ongoing tactic. Proposed by the Executive Committee in the August 2026 cycle.",
+              "revised_at": "2026-08-04"
             },
             {
               "tactic_id": "3.1.5",
@@ -371,11 +368,11 @@
               "is_new_in_plan": false,
               "last_reported_by": "Executive",
               "last_reported_at": "2026-02-27T08:44:26",
-              "revised_description": "overcome and included in the new tactic 3.1.8",
+              "revised_description": "overcome and included in the new tactic 3.1.4",
               "revised_at": "2026-08-04",
               "is_retired": true,
               "retired_as_of": "July 2026",
-              "superseded_by": "3.1.8"
+              "superseded_by": "3.1.4"
             },
             {
               "tactic_id": "3.1.6",
@@ -385,11 +382,11 @@
               "is_new_in_plan": false,
               "last_reported_by": "Executive",
               "last_reported_at": "2026-02-27T08:44:26",
-              "revised_description": "overcome and included in the new tactic 3.1.8",
+              "revised_description": "overcome and included in the new tactic 3.1.4",
               "revised_at": "2026-08-04",
               "is_retired": true,
               "retired_as_of": "July 2026",
-              "superseded_by": "3.1.8"
+              "superseded_by": "3.1.4"
             },
             {
               "tactic_id": "3.1.7",
@@ -399,20 +396,14 @@
               "is_new_in_plan": false,
               "last_reported_by": "Executive",
               "last_reported_at": "2026-02-27T08:44:26",
-              "revised_description": "overcome and included in the new tactic 3.1.8",
+              "revised_description": "overcome and included in the new tactic 3.1.4",
               "revised_at": "2026-08-04",
               "is_retired": true,
               "retired_as_of": "July 2026",
-              "superseded_by": "3.1.8"
+              "superseded_by": "3.1.4"
             }
           ],
-          "new_tactics": [
-            {
-              "description": "The new tactic proposed to replace tactics 3.1.4-3.1.7.  The management company in collaboration with the Executive committee and ISPE communities identifies gaps on an ongoing basis. Suitable solutions are developed and implemented ad hoc involving the interested parties in ISPE. All ISPE community leaders have the opportunity to report gaps or any other needs through a dedicated form.",
-              "submitted_by": "Executive",
-              "submitted_at": "2026-08-04"
-            }
-          ],
+          "new_tactics": [],
           "responding_committees": [
             "Executive"
           ]
