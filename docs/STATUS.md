@@ -1,6 +1,6 @@
 # ISPE Strategic Plan Dashboard — Status / Handoff
 
-_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-10._
+_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-20._
 
 > **Next session starts here:** two threads, in either order.
 > 1. **ISPE-SP forks and enables Pages** — an agreed stopgap, not a reversal of the migration. A ready-to-send
@@ -14,11 +14,12 @@ _Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last u
 >    end to end 2026-08-10 including a real completion email (`submissions.delivery = 'sent'`). Test rows
 >    were cleared, so the August 2026 board is empty. This supersedes the Phase-6 Codespace step in
 >    `MIGRATION-private-repo.md`.
-> 3. **Daniela's review feedback is half-applied and NOT published — this is the live thread.** Two of her
->    three points are done on the `review-site` branch and deployed to the reviewer site only; the public
->    dashboard is untouched and still says "EFFORTS". The third (tactic numbering) is **waiting on her
->    reply**. Nothing should go to `public-deploy` until that lands, or the public site changes twice in a
->    week for no reason.
+> 3. **Daniela's review feedback is fully applied and NOT YET published — this is the live thread.** All
+>    three points are done on the `review-site` branch; the public dashboard is still untouched and still
+>    says "EFFORTS", still lists "Revised / New" as a status, and still shows Goal 3.1 as 3/3. The
+>    numbering question **landed 2026-08-20** (Daniela, confirmed with Ursula: number it **3.1.4**, as a
+>    revision) and is built. **Nothing blocks the publish now** — the three fixes plus the renumbering
+>    should reach `public-deploy` in a single copy-across, which is exactly what holding them back was for.
 
 ## Start here (cold start)
 
@@ -44,38 +45,46 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
 | `main` | `0dd8a17`, level with origin. August 2026 cycle, complete |
 | `public-deploy` | `38fbcea`, level with origin. **Live and current** |
 | BSCL Pages | serving **`public-deploy`** — `admin.html` 404 verified 2026-08-10 |
-| ISPE fork | **does not exist** — 0 forks / 0 network, re-verified 2026-08-10 |
-| BSCL repo | **public**, Team plan, 0 forks / 0 stars / 0 watchers |
-| `review-site` | `8d4cb42`, pushed. **6 commits ahead of `main`, not merged.** The reviewer site plus Daniela's first two fixes |
+| ISPE fork | **EXISTS and is correctly configured.** Forked 2026-08-10 15:23 UTC (hours after the line above was written). Pages on `public-deploy`, `admin.html` 404. `public-deploy` level with ours at `38fbcea` |
+| BSCL repo | **public**, Team plan, **1 fork** (ISPE-SP, since 2026-08-10), 0 stars / 0 watchers |
+| `review-site` | `3ee97f5` + **uncommitted working tree**, 7 commits ahead of `main`, not merged. The reviewer site, Daniela's two wording fixes, and the 3.1.4 renumbering |
 | Cloudflare | Pages `ispe-sp-review` + D1 `ispe-sp-review` + Access app "ISPE Strategic Plan Review" |
 | `new-csv-format-intake` | merged 2026-08-03 (`faa9a3d`); kept as a record only |
 
-**Working tree clean, all three branches pushed.** `review-site` is deliberately unmerged: it carries
+**`review-site` has uncommitted changes (the 3.1.4 renumbering, 2026-08-20); the other branches are clean and pushed.** `review-site` is deliberately unmerged: it carries
 changes to `index.html` and `admin.html` that should reach the public site in a single publish, once the
 numbering question is settled.
 
 **Open items** (as of 2026-08-10):
-1. **ISPE-SP forks + Pages on `public-deploy`** — see the handoff note below. The one thing that can go wrong
-   is Pages pointed at `main`, which publishes `admin.html` and the committee notes under ISPE's URL.
+1. ~~**ISPE-SP forks + Pages on `public-deploy`**~~ — **done by ISPE, verified 2026-08-20.** They took both
+   branches (so they did untick "Copy the main branch only"), pointed Pages at **`public-deploy`** and not
+   `main`, and their site serves `index.html` 200 with `admin.html`, `admin-server.py` and both scripts all
+   **404**. Their `public-deploy` is at `38fbcea`, identical to ours, and their live `data.json` carries
+   **0 committee notes**. The handoff note below is kept as the record of what was asked for.
+   **What remains is the recurring step:** each cycle, after we push to `public-deploy`, someone at ISPE must
+   open the fork, switch to `public-deploy`, and click **Sync fork → Update branch**. Their site is showing
+   the pre-feedback dashboard right now — that is **our** unpublished work, not their fork being stale.
 2. **Daniela's feedback on the August cycle (2026-08-10).** Three points; the first two are done on
    `review-site` and live on the reviewer site, **not on the public dashboard**:
-   - ~~"95 Efforts" -> "95 tactics"~~ done. The donut's centre label was the last place the old word survived.
+   - ~~"95 Efforts" -> "95 tactics"~~ done, and **finished properly on 2026-08-20**. The 08-10 pass claimed
+     the donut's centre label was the last holdout; it was not. Three UI strings still said it: the filter
+     card heading in **both** dashboards ("Filter Strategic Efforts" -> "Filter Tactics") and the summary
+     card in `admin.html`'s `publishReadOnly()` export ("Total Strategic Efforts" -> "Total Tactics").
+     **"Efforts" now appears nowhere in our own chrome.** What remains is other people's wording - see item 11.
    - ~~"Revised / New" removed from the summary row~~ done. It is an overlay tag, not a fifth status, and
      reading it as mutually exclusive with the other four was exactly the confusion she described. The
      remaining four now visibly sum to the total. The **filter button of the same name was kept** — she
      described the summary row, and a filter is a tool rather than a claim. Worth confirming with her.
-   - **Tactic numbering — awaiting her reply.** She proposed the tactic replacing 3.1.4–3.1.7 be numbered
-     **3.1.4** rather than 3.1.8. **Executive named it 3.1.8 in writing** in their August survey response,
-     and that number is already published in 8 fields (4 x `superseded_by`, 4 x rationale text). Reusing
-     3.1.4 would also collide with the ingest script, which merges keyed on `tactic_id`: the old 3.1.4's
-     status and provenance would silently attach to a tactic its committee has never seen. Recommendation
-     sent — keep 3.1.8 and actually add it. If she and Executive agree to renumber instead, it is a
-     `DEFAULT_DATA` edit in both HTML files plus the 8 published fields.
-3. **Add tactic 3.1.8 — the wording already exists.** Four retired tactics point at a successor that is not
-   in the plan, and Goal 3.1 reads `3/3`, which implies the goal is done. Executive supplied the text in the
-   August survey; it sits unused in `data.json` under goal 3.1 as a `new_tactics` entry. Adding it moves
-   active 95 -> 96, Goal 3.1 -> 3/4, Objective 3 -> 5/10. Set it **Not Started with no provenance** so it
-   reads "never reported" rather than inheriting the old 3.1.4's Executive attribution. Blocked on item 2.
+   - ~~**Tactic numbering**~~ **settled 2026-08-20 and built.** Daniela asked for **3.1.4**, confirmed with
+     Ursula: "designating the new tactic as 3.1.4 to keep the numbering and indicating this as a revision
+     (also listing the retired tactics under 'Revisions and New tactics')." Built as **3.1.4 revised in
+     place** with 3.1.5–3.1.7 retired into it — *not* as a separate new 3.1.4 beside the retired one, which
+     would have put two tactics under one `tactic_id` and broken three things keyed on it. See DECISIONS.
+3. ~~**Add the replacement tactic**~~ — **done 2026-08-20, not yet published.** Carried as **3.1.4 revised
+   in place**. Active 95 -> 96, retired 4 -> 3, Goal 3.1 -> **3/4** (was 3/3, which implied the goal was
+   finished), Objective 3 -> **5/10**. Verified in the browser: 3.1.4 renders active with a REV badge,
+   3.1.5-3.1.7 render retired, and "3.1.8" appears nowhere on the page. Provenance was **carried, not
+   cleared** — see DECISIONS for why that reverses the note that used to sit here.
 4. **Share the reviewer site URL with ISPE.** Ready now. Policy "ISPE reviewers" = `@pharmacoepi.org` +
    4 named addresses; adding a reviewer is one dashboard edit, no redeploy.
    ⚠️ **`@ispe.org` is a different organisation** (International Society for Pharmaceutical Engineering);
@@ -84,17 +93,34 @@ numbering question is settled.
    owner's address. A second recipient needs a verified sending domain — use a subdomain such as
    `notify.blackswancausallabs.com` so the root domain's Google Workspace records are never touched.
    Raised and dropped 2026-08-10.
-5. **Tidy the 8 published revision rationales.** They read as raw survey answers — one begins *"Yes."*. Now
-   editable in the admin panel; edit, rebuild the payload, sync `public-deploy`.
-6. **Six "August 2026" completion dates record when the tactic was logged, not finished** (2.1.2, 2.1.3,
+5. **The survey instrument still asks the old 3.1.4 question.** Its column reads "Tactic 3.1.4: Identify
+   gaps (gaps and prioritization analysis)…", which is wording that no longer exists. The ingest is correct
+   (that column maps to 3.1.4, the right tactic) and nothing fails, but a committee answering it next cycle
+   is reporting on text that was replaced. **Edit the instrument before the next cycle opens.** This needed
+   doing under either numbering — 3.1.8 would have had no column at all.
+6. **Tidy the published revision rationales.** Still 8, and most read as raw survey answers — 7.1.7 begins
+   *"The is tactic…"*. Four are now clean: 3.1.4-3.1.7 come from `REVISION_RATIONALE` in the ingest script
+   as of 2026-08-20, which is also the only way an edit to them survives a re-ingest. The remaining four
+   (2.2.1, 2.2.2, 2.2.5, 7.1.7) are still whatever the committee typed, and editing them in the admin panel
+   **will be overwritten on the next ingest** unless they are curated the same way. (The rationale that
+   begins *"Yes."* is not one of these — it is a new-tactic submission under goal 1.2.)
+7. **Six "August 2026" completion dates record when the tactic was logged, not finished** (2.1.2, 2.1.3,
    2.1.6, 3.1.3, 6.1.2, 7.1.2). The dashboard shows all nine August dates identically. Footnote them, blank
    them, or leave as-is — a decision, not a bug.
-7. **Three committees have not reported this cycle** — Executive/Impact, Finance, Global Development /
+8. **Three committees have not reported this cycle** — Executive/Impact, Finance, Global Development /
    Strategic Planning. Their tactics carried forward and are flagged at-risk as unreconfirmed.
-8. **Make admin's Save message honest.** It says "Saved in this browser only", but `ispe_sp_data` is written
+9. **Test responsive changes at ~760px, not full-screen.** That is the ISPE page's content column, and it
+   is the width the embed actually renders at. The donut-alone-in-a-box bug (fixed 2026-08-20) was invisible
+   at desktop width for exactly this reason. See DECISIONS.
+10. **Make admin's Save message honest.** It says "Saved in this browser only", but `ispe_sp_data` is written
    and never read back, so edits are gone on reload. Less urgent than it was — `review-site/` is read-only and
    never runs admin's Save — but still a live trap for anyone who opens `admin.html` without the helper.
-9. ~~Absorb the new CSV format~~ / ~~publish the August cycle~~ / ~~keep notes off the public site~~ /
+11. **"Efforts" survives in 16 strings other people wrote — leave them.** 15 are plan descriptions (the
+   Strategic Plan's own wording, not our label); the 16th is Education's new-tactic submission under goal
+   1.2. See DECISIONS; a blanket find-and-replace across `index.html` / `admin.html` / `data.json`
+   is always wrong. Related and still open: `publishReadOnly()` in `admin.html` still shows a
+   **"Revised / New" summary card**, the one path Daniela's second fix (`8d4cb42`) missed.
+12. ~~Absorb the new CSV format~~ / ~~publish the August cycle~~ / ~~keep notes off the public site~~ /
    ~~complete the completion dates~~ / ~~the emblem~~ — **all done 2026-08-09/10 and live.**
 
 ## The August cycle (what just happened)
@@ -172,9 +198,13 @@ intended to be embedded on the ISPE website as an `<iframe>`. No backend — eve
     `admin.html`, `admin-server.py`, `csv_to_dashboard_json.py`, `build_public_payload.py` all **404**.
   - Live data: August 2026, 99 tactics (95 active), **27 completed all dated**, **0 notes served**.
   - This is "not published", not "access-controlled". Pages on a public repo has no auth.
-- **ISPE (not created yet):** `github.com/ISPE-SP/ISPE-Strategic-Plan-Dashboard` returns **404**, the BSCL
-  repo shows **0 forks / 0 network**, and ISPE-SP has **0 public repos**. Nothing has been forked.
-  Target URL once they do: https://ispe-sp.github.io/ISPE-Strategic-Plan-Dashboard/ ← the iframe `src`.
+- **ISPE (live since 2026-08-10):** https://ispe-sp.github.io/ISPE-Strategic-Plan-Dashboard/ ← the iframe
+  `src`. Verified 2026-08-20: Pages source is **`public-deploy` / (root)**, status `built`; `/` 200,
+  `data.json` 200 with **0 notes**; `admin.html`, `admin-server.py`, `csv_to_dashboard_json.py`,
+  `build_public_payload.py` all **404**. Their `public-deploy` = `38fbcea`, level with ours.
+  ⚠️ The fork's **default branch is `main`** — that is fine while Pages points at `public-deploy`, but it
+  means anyone browsing their repo lands on the branch that carries `admin.html` and the notes. Do not
+  suggest they "fix" Pages to follow the default.
 
 ## Handing the fork to ISPE-SP
 

@@ -592,7 +592,8 @@ carrying committee comments and the at-risk list, *and* refused every actual ISP
 collision is easy to make and will recur — check the domain, not the initials.
 
 ## Reviewer feedback, first cycle (2026-08-10)
-- **"Efforts" → "tactics".** The donut's centre label was the last place the old word survived.
+- **"Efforts" → "tactics".** The donut's centre label was *believed* to be the last place the old word
+  survived. It was not — see the 2026-08-20 entry below; three more UI strings were found and fixed.
 - **"Revised / New" came off the summary row.** It sat beside four mutually exclusive statuses and read as a
   fifth category. It is an overlay tag — a revised tactic also carries one of the four — and only the
   footnote said so. Removing it makes the remaining figures visibly sum to the total with nothing to
@@ -614,3 +615,109 @@ numbers aligned with active ones. Not adopted, pending the committee. Three reas
 If ISPE does renumber, the retired rows must move out of the goal listing in the same change, or two rows
 share an ID. Either way the replacement's text already exists: Executive supplied it in August and it sits
 unused in `data.json` as a `new_tactics` entry under goal 3.1.
+
+## Tactic numbering: 3.1.4, revised in place (2026-08-20) — supersedes the entry above
+ISPE settled it: **Daniela asked for 3.1.4, and confirmed with Ursula** ("designating the new tactic as
+3.1.4 to keep the numbering and indicating this as a revision (also listing the retired tactics under
+'Revisions and New tactics')"). The 2026-08-10 entry above is superseded — its reasoning stands as the
+record of *why the question was worth asking*, not as the outcome.
+
+**What was adopted is narrower than "renumber 3.1.8 to 3.1.4".** There were two ways to give ISPE the
+number they asked for, and only one of them works:
+
+- **A separate new 3.1.4, with the old 3.1.4 still retired beside it.** This is what the 2026-08-10 entry
+  warned about, and re-checking confirmed it: three separate things are keyed on `tactic_id` and would each
+  break. `csv_to_dashboard_json.py:631` (`existing_tactics.get(tid)`) would carry the retired tactic's
+  status and provenance onto the new one; `RETIRED["3.1.4"]` would stamp the new tactic retired and
+  superseded by itself; and the survey instrument **still ships a "Tactic 3.1.4: Identify gaps…" column**
+  (col 177 of the August export), so next cycle's answer to the old question would land on the new tactic.
+- **3.1.4 revised in place, with 3.1.5–3.1.7 retired into it.** Adopted. One `tactic_id`, one continuous
+  history, nothing to re-key. Ursula's own words — "indicating this as a revision" — describe exactly this,
+  and it is what makes reusing the number *honest* rather than a collision: 3.1.4 is not a different tactic
+  wearing an old number, it is the same line item rewritten.
+
+Result: Goal 3.1 reads **3/4** instead of the old 3/3 that implied the goal was finished, Objective 3 reads
+**5/10**, and active tactics move **95 → 96** with retired **4 → 3**. Verified in the browser, not just in
+the data: 3.1.4 renders active with a REV badge, 3.1.5–3.1.7 render retired, and the string "3.1.8" appears
+nowhere on the rendered page.
+
+**Two curated overrides were needed, because the survey re-supplies its answers on every ingest.**
+- `REVISION_RATIONALE` — the rationale is published prose, and the explain column wins over `data.json` on
+  every run (`rev_desc`, ~:683). Executive wrote "overcome and included in the new tactic 3.1.8" in four
+  cells; without the override, every re-ingest quietly restores the old number. **Their wording is kept and
+  only the number moves** — editing a committee's own published words is authorised here by Daniela and
+  Ursula, and is not something to do silently on our own initiative.
+- `ADOPTED_NEW_TACTICS` — Executive's free-text submission is the *source* of the new wording. Once it is
+  carried as a numbered tactic it must stop appearing as an open suggestion, or "Revisions & New Tactics"
+  lists the same thing twice: once as the suggestion, once as the tactic it became.
+
+**The one judgment call: provenance was carried, not cleared.** 3.1.4 keeps `last_reported_by: Executive`
+/ `last_reported_at: 2026-02-27`. The 2026-08-10 plan said to clear it so the tactic read "never reported" —
+but that was written for 3.1.8, a genuinely new row with no history. Under revised-in-place the lineage is
+the whole justification for the number, so erasing it would contradict the model, and it would need a
+mechanism that exists for exactly one row. The carried date is also what correctly flags 3.1.4 as
+**unreconfirmed this cycle** in the at-risk panel — which is true: Executive proposed the revision in August
+but reported no status against it. `revised_at: 2026-08-04` and the rationale carry the "this changed in
+August" signal.
+
+**Left open deliberately: the survey instrument still asks the old question.** Its 3.1.4 column reads
+"Identify gaps (gaps and prioritization analysis)…". The ingest is correct — that column maps to 3.1.4,
+which is the right tactic — but a committee answering it next cycle is answering about wording that no
+longer exists. This needed fixing under *either* numbering (3.1.8 had no column at all, which the coverage
+check at :780 would have reported), and it is an instrument edit, not a code change.
+
+## "Efforts" → "tactics": our chrome only, never the plan's prose (2026-08-20)
+Daniela's first fix was applied twice: once on 2026-08-10 (the donut label), and properly on 2026-08-20,
+when "throughout" turned up three UI strings the first pass missed — `Filter Strategic Efforts` in **both**
+`index.html` and `admin.html`, and `Total Strategic Efforts` in `admin.html`'s `publishReadOnly()` export.
+The 08-10 note claiming the donut was "the last place the old word survived" was wrong, and is corrected in
+place above so a cold start does not trust it.
+
+**The word is now gone from everything we author. It deliberately remains in 16 strings that other people
+wrote — 15 plan descriptions (3 goal, 12 tactic) and 1 committee submission — and those must not be
+touched.** In the 15, "strategic efforts" is the **ISPE Strategic Plan's own language**, quoted from `ISPE_Strat_Plan_2029_-_FINAL.pdf` — "continue transparent calls for leaders and
+members to engage in strategic efforts" (Goal 1.1), "lead strategic efforts through a transparent
+solicitation" (1.1.1), and 14 more. Rewriting those would not be relabelling our UI; it would be editing the
+plan the dashboard exists to report on, and several read as nonsense with the word swapped ("lead strategic
+tactics").
+
+The distinction is **who wrote the string**, not which file it lives in:
+- **Ours → "tactics".** Headings, filter labels, summary cards, the donut, section titles.
+- **The plan's / a committee's → leave verbatim.** Everything inside `DEFAULT_DATA` descriptions, plus
+  survey-sourced `notes`, `revised_description`, and `new_tactics`. A blanket find-and-replace across these
+  files is therefore **always wrong**. Audited 2026-08-20: of the 16 remaining matches in `data.json`, 15
+  are plan `description` fields and the 16th is Education's own new-tactic submission under goal 1.2 (the
+  one that begins *"Yes."*). None are in notes or revision rationales.
+
+**Still inconsistent, deliberately left:** `publishReadOnly()` also carries a **"Revised / New" summary
+card**, which is the *other* half of Daniela's feedback ("stop listing Revised / New as a status", shipped
+in `8d4cb42`). That fix landed in `renderSummary()` and missed this export path. Removing a card from a
+published artifact is a wider change than a relabel, so it was flagged rather than done. Worth closing next
+time this file is open.
+
+## The embed's lonely donut: keep the two cards side by side to 600px (2026-08-20)
+On the ISPE page the dashboard sits in an iframe about **760px** wide. That fell under the old **900px**
+breakpoint, so `.chart-filter-row` collapsed from `170px 1fr` to a single column, the Status Overview card
+went full-width, and a **140px donut sat alone in a 760px box** with roughly 150px of dead space around it.
+It looked broken in the embed while looking correct on a desktop browser, which is why it survived so long —
+**nobody who tested it at desktop width could see it.**
+
+Fixed by moving the collapse point to **600px**, which is where 170px plus the filter buttons genuinely stop
+fitting, rather than where the desktop layout happens to stop being comfortable. Two supporting rules apply
+only in the 600–900px range:
+- `.chart-card canvas { margin: auto }` — the donut centres in whatever height the filter card sets, instead
+  of hanging at the top of a stretched grid cell.
+- `.filter-row .filter-btn { flex: 0 1 auto }` — buttons are `flex: 1 1 auto` by default so a full row
+  divides evenly. At this width they wrap, and a **lone wrapped button stretches across an entire row on its
+  own**, which reads as a banner rather than a filter. Sizing to text fixes it.
+
+Verified at three widths: 420px still stacks (phone, unchanged), 760px sits side by side (the embed),
+above 900px is untouched. Saves ~150px of vertical space in the embed.
+
+**A merged single card was considered and not taken.** Putting the donut and filters in one pill solves the
+same problem, but it restructures markup that `review-site/build_review_site.py` patches by
+match-count-asserted selector, and it changes the desktop layout to fix a defect that only exists below
+900px. The breakpoint move is three rules and touches nothing above 900px.
+
+**The general trap:** this dashboard is **embedded**, so the width that matters is the host page's content
+column, not the browser window. Anything responsive must be checked at ~760px, not just full-screen.
