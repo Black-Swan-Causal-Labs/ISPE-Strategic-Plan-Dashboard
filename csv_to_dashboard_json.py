@@ -174,6 +174,7 @@ def normalize_status(raw):
         # progress the committee never reported - four tactics being retired
         # into 3.1.8 all showed as On Track. Status is now left alone (the
         # previous value carries forward) and only is_revised is set.
+        # (That successor is numbered 3.1.4 as of 2026-08-20; see RETIRED.)
         return None, True
     key = re.sub(r"[^a-z ]", " ", v.lower())
     key = re.sub(r"\s+", " ", key).strip()
@@ -190,12 +191,52 @@ def is_changed_value(v):
 # in the new tactic 3.1.8") - so this stays a curated list rather than
 # something inferred from prose. Retired tactics remain visible in their goal
 # but are excluded from every progress count.
+#
+# 3.1.4 is deliberately NOT here. Executive proposed one tactic to replace
+# 3.1.4-3.1.7 and called it 3.1.8; ISPE (Daniela, confirmed with Ursula,
+# 2026-08-20) asked for it to be numbered 3.1.4 instead, so Goal 3.1 stays
+# sequential. It is therefore carried as 3.1.4 REVISED IN PLACE rather than as
+# a fifth number: one tactic_id, one continuous history. Numbering it as a
+# separate new 3.1.4 while the old one stayed retired would put two tactics
+# under one key, and the merge below (existing_tactics[tid]), this dict, and
+# the survey's own "Tactic 3.1.4" column are all keyed on exactly that.
 RETIRED = {
-    "3.1.4": {"as_of": "July 2026", "superseded_by": "3.1.8"},
-    "3.1.5": {"as_of": "July 2026", "superseded_by": "3.1.8"},
-    "3.1.6": {"as_of": "July 2026", "superseded_by": "3.1.8"},
-    "3.1.7": {"as_of": "July 2026", "superseded_by": "3.1.8"},
+    "3.1.5": {"as_of": "July 2026", "superseded_by": "3.1.4"},
+    "3.1.6": {"as_of": "July 2026", "superseded_by": "3.1.4"},
+    "3.1.7": {"as_of": "July 2026", "superseded_by": "3.1.4"},
 }
+
+# Revision rationale that overrides whatever the survey's explain column says.
+# Needed because a rationale is published prose that can go stale: Executive
+# wrote "overcome and included in the new tactic 3.1.8" in four cells, and the
+# tactic they were pointing at is now numbered 3.1.4. Without this the explain
+# column wins on every re-ingest (see rev_desc below) and quietly restores the
+# old number. Their wording is kept; only the number moves.
+REVISION_RATIONALE = {
+    "3.1.4": "Replaces the former tactic 3.1.4 and consolidates retired tactics "
+             "3.1.5-3.1.7 into a single ongoing tactic. Proposed by the Executive "
+             "Committee in the August 2026 cycle.",
+    "3.1.5": "overcome and included in the new tactic 3.1.4",
+    "3.1.6": "overcome and included in the new tactic 3.1.4",
+    "3.1.7": "overcome and included in the new tactic 3.1.4",
+}
+
+# Free-text new-tactic submissions that have since been adopted into the plan
+# as a numbered tactic. The survey re-supplies every submission on every
+# ingest, so without this the adopted text keeps appearing under "Revisions &
+# New Tactics" as though it were still an open suggestion - once as the
+# suggestion and again as the numbered tactic it became. Matched on a
+# normalized prefix so trailing edits to the submission do not un-adopt it.
+ADOPTED_NEW_TACTICS = {
+    "3.1": [("the new tactic proposed to replace tactics 3.1.4-3.1.7", "3.1.4")],
+}
+
+
+def is_adopted_new_tactic(gid, description):
+    """True if this survey submission is already carried as a numbered tactic."""
+    norm = " ".join((description or "").lower().split())
+    return any(norm.startswith(prefix)
+               for prefix, _tid in ADOPTED_NEW_TACTICS.get(gid, []))
 
 # When each completed tactic was completed. The export records what a status is
 # but never when it changed, so - like RETIRED - these dates are curated and
@@ -684,6 +725,11 @@ def main():
                 elif prev:
                     rev_desc = rev_desc or prev.get("revised_description")
                     rev_when = rev_when or prev.get("revised_at")
+                # Curated rationale wins over both: the survey text names a
+                # tactic number that has since changed.
+                if tid in REVISION_RATIONALE:
+                    rev_desc = REVISION_RATIONALE[tid]
+                    is_revised = True
 
                 tactic_out = {
                     "tactic_id": tid,
@@ -743,6 +789,8 @@ def main():
                         "no new tactics have been added",
                     )):
                         continue
+                    if is_adopted_new_tactic(gid, vs):
+                        continue
                     key = (vs, r["committee"])
                     if key in seen_new:
                         continue
@@ -760,6 +808,8 @@ def main():
             if merge:
                 for nt in (existing_goals.get(gid) or {}).get("new_tactics", []) or []:
                     key = (nt.get("description", "").strip(), nt.get("submitted_by") or "")
+                    if is_adopted_new_tactic(gid, key[0]):
+                        continue
                     if key[0] and key not in seen_new:
                         seen_new.add(key)
                         new_tactics_list.append(nt)
