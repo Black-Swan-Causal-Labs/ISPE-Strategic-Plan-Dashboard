@@ -779,3 +779,37 @@ happened for a re-ingest. Zero statuses, progress values or narratives changed.
 **Suggested guards (not built):** store a `source_hash` in `metadata` and refuse to ingest when it matches;
 warn loudly on any unrecognized `*.csv` sitting in the folder rather than ignoring it in silence. **Until
 then: `md5` the CSV against `metadata.source_file` before every ingest.** Identical means do not ingest.
+
+## The survey stamp is gone from the public header (2026-08-21)
+
+Removed in two steps, both from Daniela with Ursula agreeing. The header line under the title used to read
+`Survey data through August 2026 · 11 committee responses this cycle`. Neither half survived.
+
+**The count went first.** *"I think adding the '11 committee responses this cycle' note creates confusion, as
+Ursula also indicated. Not sure we need that information included."* She was right, and for a specific
+reason: **11 of 14 committees reported**, and one of the 12 rows was a **second Executive submission**. So
+"11 committee responses" was a completeness figure with its denominator missing — it read as *everyone
+reported* when three committees had not. A number that invites the wrong inference is worse than no number.
+
+**Then the date.** *"it just seems redundant"* — and it was, verbatim: the line above already says
+`2024-2029 | As of August 2026`. Both come from the same cycle. Nothing was lost by deleting the restatement.
+
+**What that removed in code.** Both branches of the count (the `cycle_committees` length *and* an older
+fallback derived from `responding_committees` — leaving that one would have brought the note back on any
+cycle where `cycle_committees` was empty, with no obvious cause), the `committees` Set, the `#surveyStamp`
+element, and the whole `latest` pass over every tactic, which existed solely to date this stamp. The As-of
+line uses `metadata.as_of_date` and needs none of it.
+
+**`admin.html` keeps its stamp.** Internally, "how much of the cycle is actually in" is the question you are
+asking, so the count earns its place. The two headers now differ by one line on purpose — if they are ever
+reconciled, reconcile *toward* admin keeping it, not toward the public page getting it back.
+
+**Collapsed desktop height after the change: 1742px**, so the documented 1800px embed still clears it. See
+"The documented embed height was shorter than the page".
+
+**A process note worth keeping.** The STATUS.md bullet describing this header was wrong when checked — it
+claimed a "Revised / New = 18" card that had been deleted the day before, and a revisions badge of 21 that
+actually renders 23. A verification pass had marked it correct, because it compared the docs against
+`data.json` rather than against **the rendered page**. 21 is the right answer from the data; 23 is what the
+badge shows, because it adds the 2 `new_tactics` submitted this cycle. **Check UI claims by loading the
+page.** Data-derived agreement is not evidence about what a user sees.

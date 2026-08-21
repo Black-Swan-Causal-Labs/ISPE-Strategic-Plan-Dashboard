@@ -301,9 +301,13 @@ the only thing standing between a malformed cycle and a plausible-looking wrong 
 - **6.2.1 is corrected, not survey-derived.** Membership reported it `Completed` in August; Daniela confirmed
   with Anne that it is not, and its twin 6.1.5 says `In progress- on track` for the same work. Set by hand in
   `data.json` — **a re-ingest of the August CSV reverts it.** See DECISIONS, 2026-08-21.
-- Header "As of …" comes from `metadata.as_of_date` (admin picker) and reads **August 2026**. The line under
-  it — "Survey data through August 2026 · 11 committee responses this cycle" — comes from
-  `metadata.cycle_label` / `cycle_committees`. Both are correct and agree.
+- **The public header is two lines and nothing else**: the title, then "2024-2029 | As of **August 2026**"
+  from `metadata.as_of_date` (admin picker). The third line under it — the "survey stamp", which read
+  "Survey data through August 2026 · 11 committee responses this cycle" — **is gone from `index.html`**
+  (Daniela, Ursula agreeing, 2026-08-21): the count read as a completeness claim without its denominator,
+  and the date restated the As-of line above it. Element and code both removed, along with the `latest`
+  pass that existed only to feed it. **`admin.html` keeps its stamp** — cycle coverage is worth knowing
+  internally — so the two headers now differ by that one line, on purpose.
 
 ## Key UI components
 - **Summary cards** — the 4 status cards partition the **95 active** tactics; **"Revised / New*"** is a

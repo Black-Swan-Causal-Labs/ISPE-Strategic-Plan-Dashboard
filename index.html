@@ -775,7 +775,6 @@
   <div class="header-text">
     <h1>Strategic Plan Progress Tracker</h1>
     <p>2024-2029 | As of <span id="asOfDate">February 2026</span></p>
-    <p id="surveyStamp" style="font-size: 0.78rem; opacity: 0.75; margin-top: 2px;"></p>
   </div>
 </div>
 
@@ -919,31 +918,13 @@ async function init() {
     const el = document.getElementById('asOfDate');
     if (el) el.textContent = data.metadata.as_of_date;
   }
-  let latest = null;
-  data.objectives.forEach(o => o.goals.forEach(g => {
-    g.tactics.forEach(t => {
-      const d = t.last_reported_at || t.revised_at;
-      if (d && (!latest || d > latest)) latest = d;
-    });
-  }));
-  const stamp = document.getElementById('surveyStamp');
-  if (stamp) {
-    const meta = data.metadata || {};
-    const parts = [];
-    // Prefer the cycle this file was built from. Deriving the date from tactic
-    // provenance alone pins the stamp to the newest carried-forward date, and
-    // the current export carries no dates at all - so ingesting fresh data was
-    // making this stamp MORE stale rather than less.
-    const through = meta.cycle_label || (latest ? formatMonthYear(latest) : null);
-    if (through) parts.push('Survey data through ' + through);
-    // No committee-response count here on purpose. It read as a completeness
-    // claim without its denominator - 11 of 14 committees reported, and one of
-    // the 12 rows was a second Executive submission - so the number invited
-    // exactly the wrong inference. Removed at Daniela's request (Ursula
-    // agreed), 2026-08-21. The count is still in admin.html, where knowing
-    // cycle coverage is the point. See DECISIONS.
-    stamp.textContent = parts.join(' · ');
-  }
+  // No survey stamp under the header. It carried "Survey data through <cycle>"
+  // and a committee-response count; both are gone (Daniela, Ursula agreeing,
+  // 2026-08-21). The count read as a completeness claim without its
+  // denominator, and the date merely restated the "As of <cycle>" line
+  // directly above it. The whole `latest` pass existed only to date this
+  // stamp, so it goes too - `cycle_label` is what the As-of line uses.
+  // admin.html keeps its stamp: cycle coverage matters internally.
   renderAll();
 }
 
