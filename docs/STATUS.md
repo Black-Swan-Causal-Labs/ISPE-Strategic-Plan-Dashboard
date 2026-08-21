@@ -284,9 +284,14 @@ the only thing standing between a malformed cycle and a plausible-looking wrong 
   retired (2026-08-20, Daniela confirmed with Ursula). The earlier plan for a new 3.1.8 was dropped. The three
   stay listed in goal 3.1 with a `RETIRED` badge and a dagger, and are excluded from every progress count —
   rings, goal `n/m`, objective totals, all the summary cards, mini pills, at-risk.
-- **Revised / New = 18** on the card; the **Revisions section badge reads 21**. They differ on purpose: the
-  card excludes retired tactics so every card describes the same 96, the section includes them because being
-  retired *is* the revision. See DECISIONS if this looks like a bug.
+- **There is no "Revised / New" status card any more** — dropped 2026-08-20 on Daniela's feedback that it is
+  not a status. It survives only as a *filter button*, which carries no count. The summary row is now just
+  **96 Total · 22 Not Started · 38 On Track · 10 Delayed · 26 Completed**, and those four sum to Total.
+- **The "Revisions & New Tactics" section badge reads 23**, which is not the 21 flagged tactics. It is
+  **21 + 2**: every tactic carrying `is_revised` or `is_new_in_plan` (retired included — being retired *is*
+  the revision), **plus the `new_tactics` submitted this cycle** (goals 1.2 and 4.2), which are proposals
+  that do not exist in the plan and so are not tactics. `index.html:1256-1260`. The count of revised/new
+  among *active* tactics is 18, but **that figure is not displayed anywhere** — do not expect to see it.
 - **Goal/objective progress is a plain count over active tactics** — goal 3.1 reads `3/4`, objective 3 reads
   `5/10`. The old `x/10` scale is gone. Stored `progress_score` fields are intentionally unused.
 - **At Risk = 32** (22 Not Started + 10 Delayed, retired excluded) — **admin view only**. Up from 28 in July,

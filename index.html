@@ -920,9 +920,7 @@ async function init() {
     if (el) el.textContent = data.metadata.as_of_date;
   }
   let latest = null;
-  const committees = new Set();
   data.objectives.forEach(o => o.goals.forEach(g => {
-    (g.responding_committees || []).forEach(c => committees.add(c));
     g.tactics.forEach(t => {
       const d = t.last_reported_at || t.revised_at;
       if (d && (!latest || d > latest)) latest = d;
@@ -938,12 +936,12 @@ async function init() {
     // making this stamp MORE stale rather than less.
     const through = meta.cycle_label || (latest ? formatMonthYear(latest) : null);
     if (through) parts.push('Survey data through ' + through);
-    const thisCycle = (meta.cycle_committees || []).length;
-    if (thisCycle) {
-      parts.push(thisCycle + ' committee response' + (thisCycle === 1 ? '' : 's') + ' this cycle');
-    } else if (committees.size) {
-      parts.push(committees.size + ' committee response' + (committees.size === 1 ? '' : 's'));
-    }
+    // No committee-response count here on purpose. It read as a completeness
+    // claim without its denominator - 11 of 14 committees reported, and one of
+    // the 12 rows was a second Executive submission - so the number invited
+    // exactly the wrong inference. Removed at Daniela's request (Ursula
+    // agreed), 2026-08-21. The count is still in admin.html, where knowing
+    // cycle coverage is the point. See DECISIONS.
     stamp.textContent = parts.join(' · ');
   }
   renderAll();
