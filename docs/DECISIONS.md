@@ -721,3 +721,61 @@ match-count-asserted selector, and it changes the desktop layout to fix a defect
 
 **The general trap:** this dashboard is **embedded**, so the width that matters is the host page's content
 column, not the browser window. Anything responsive must be checked at ~760px, not just full-screen.
+
+## 6.2.1 is not completed — the survey was wrong, and the file said so itself (2026-08-21)
+
+Daniela, on the email chain: *"can we remove Tactic 6.2.1 from the list of completed tactics based on the
+communication with Anne? This is not completed yet and it's an important document, so I don't want anyone to
+look up for an updated version."*
+
+**The correction was never in the export.** `Export 8.20.2026.csv` still carries `Membership -> 'Completed'`
+in column 387. Laura's edit did not reach Alchemer, so no re-ingest could ever have picked it up.
+
+**The file contradicted itself, which is the part worth remembering.** The same work is tracked twice:
+
+| tactic | reported by | August answer |
+|---|---|---|
+| 6.1.5 | Strategic Planning | `In progress- on track` |
+| 6.2.1 | Membership | `Completed` |
+
+The survey header for 6.1.5 says so outright — *"…\*also a tactic under goal 6.2"*. The plan baseline in
+`index.html`'s `DEFAULT_DATA` also carries 6.2.1 as In Progress. So Membership's answer was the lone outlier,
+and Daniela's correction agreed with two independent sources already in the repo. **When two committees own
+one piece of work, the export can disagree with itself and nothing flags it** — the ingest has no
+cross-tactic consistency check, and a duplicate-tracked tactic is exactly where one would pay off.
+
+**Fixed by editing `data.json`, not the script.** 6.2.1's `completed_at: "August 2026"` was *derived* — it is
+not in `COMPLETED_AT`; `csv_to_dashboard_json.py:753-762` stamps the cycle label when a tactic flips to
+Completed during a cycle. So clearing the status clears the date on its own, and there was no curated
+override to unwind. Status set to `In Progress - On Track` to match 6.1.5. Goal 6.2 went `5/6 → 4/6`,
+plan-wide Completed `27 → 26`, On Track `37 → 38`. Published as `main 881e3e4` / `public-deploy 5ca8cbc`.
+
+⚠️ **This correction is not durable against a re-ingest.** The August CSV still says `Completed`, so anyone
+following the documented ingest recipe in `STATUS.md` (`git checkout main -- data.json` then run the script)
+**silently reverts it**. There is no `STATUS_OVERRIDE` map today — `RETIRED`, `REVISION_RATIONALE` and
+`COMPLETED_AT` cover the other "the survey is wrong and we know better" cases, but not status. If August is
+genuinely the last ingest of this cycle the edit is safe; if the file is ever re-run, check 6.2.1 first.
+
+## The Aug 20 "new ingest" was the Aug 4 export again (2026-08-21)
+
+`Export 8.20.2026.csv` is **byte-identical** to `20260804134803-SurveyExport.csv` — same MD5
+(`447c3ce04c61924bfbbcb74bc3e61668`), already the source of `data.json`. Same 12 responses, same 11
+committees. No late returns arrived between Aug 4 and Aug 20.
+
+**Ingesting it would have corrupted data while changing nothing.** A dry run moved 11 of 1041 leaf fields:
+three metadata, and **eight `revised_at` dates pushed `2026-08-04 → 2026-08-20`** (2.2.1, 2.2.2, 2.2.5,
+3.1.4, 3.1.5, 3.1.6, 3.1.7, 7.1.7). Cause: `rev_when = rev_explained_at or cycle_date` at line 719, where
+`cycle_date` comes from the **filename**. Correct for a real cycle; it back-dates a revision that never
+happened for a re-ingest. Zero statuses, progress values or narratives changed.
+
+**Two intake gaps this exposed:**
+1. `CSV_GLOBS` matches `SP Reports*.csv` and `[0-9]*-SurveyExport.csv` — **neither matches
+   `Export 8.20.2026.csv`**. A bare `python3 csv_to_dashboard_json.py` would have skipped the new file,
+   re-ingested the August one, and printed a confident success. The filename convention is now three deep
+   and the glob is the only thing standing between a renamed export and a silently stale publish.
+2. Nothing compares CSV **content** to what is already ingested. `metadata.source_file` records a name, not
+   a hash, so a re-download under a new name looks like a new cycle.
+
+**Suggested guards (not built):** store a `source_hash` in `metadata` and refuse to ingest when it matches;
+warn loudly on any unrecognized `*.csv` sitting in the folder rather than ignoring it in silence. **Until
+then: `md5` the CSV against `metadata.source_file` before every ingest.** Identical means do not ingest.

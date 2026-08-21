@@ -1,11 +1,15 @@
 # ISPE Strategic Plan Dashboard — Status / Handoff
 
-_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-20._
+_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-21._
 
-> **Next session starts here:** two threads, in either order.
-> 1. **ISPE-SP forks and enables Pages** — an agreed stopgap, not a reversal of the migration. A ready-to-send
->    handoff note is in "Handing the fork to ISPE-SP" below. **Nothing has been forked yet** (verified
->    2026-08-10: 0 forks, 0 network, ISPE-SP has 0 public repos).
+> **Next session starts here:** the live thread is #1.
+> 1. **The ISPE-SP fork is two publishes stale — chase the sync.** Their `public-deploy` sits at `38fbcea`
+>    (verified 2026-08-21), missing `884a501` (Daniela's three fixes + the 3.1.4 renumbering) **and** `5ca8cbc`
+>    (6.2.1 is not completed). So the ISPE-hosted site still says "EFFORTS" and still shows **6.2.1 as
+>    Completed** — the precise thing Daniela asked us to remove. We cannot push to their fork; someone at
+>    ISPE-SP must click **Sync fork → Update branch** *while viewing `public-deploy`*. Send-ready note in
+>    "Handing the fork to ISPE-SP" below. Forking itself is **done** (2026-08-10, Pages correctly on
+>    `public-deploy`, `admin.html` 404s).
 > 2. **Deploy the reviewer site.** The hosted-admin question is **decided and built** (2026-08-10):
 >    `review-site/` is a Cloudflare Pages + Access + D1 app where reviewers comment, flag and approve, and
 >    everyone sees everyone's. **Complete review** emails you that reviewer's full summary — one mail per
@@ -14,12 +18,10 @@ _Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last u
 >    end to end 2026-08-10 including a real completion email (`submissions.delivery = 'sent'`). Test rows
 >    were cleared, so the August 2026 board is empty. This supersedes the Phase-6 Codespace step in
 >    `MIGRATION-private-repo.md`.
-> 3. **Daniela's review feedback is fully applied and NOT YET published — this is the live thread.** All
->    three points are done on the `review-site` branch; the public dashboard is still untouched and still
->    says "EFFORTS", still lists "Revised / New" as a status, and still shows Goal 3.1 as 3/3. The
->    numbering question **landed 2026-08-20** (Daniela, confirmed with Ursula: number it **3.1.4**, as a
->    revision) and is built. **Nothing blocks the publish now** — the three fixes plus the renumbering
->    should reach `public-deploy` in a single copy-across, which is exactly what holding them back was for.
+> 3. ~~**Daniela's review feedback is applied but not published.**~~ **Published 2026-08-20** as `884a501`
+>    — the three fixes plus the 3.1.4 renumbering reached `public-deploy` in a single copy-across, as
+>    intended. `review-site` is merged and level with `main`. **On our Pages this is live; on the ISPE fork
+>    it is not** — see #1.
 
 ## Start here (cold start)
 
@@ -31,9 +33,15 @@ python3 admin-server.py          # → http://127.0.0.1:8800/admin.html  (editor
 # Just viewing, no editing:
 python3 -m http.server 8000      # → http://localhost:8000/index.html
 
-# Ingest a new survey cycle (picks the newest recognized export in this folder):
+# Ingest a new survey cycle (picks the newest recognized export in this folder).
+# FIRST: confirm it is actually new. A re-download under a new name is byte-identical
+# and re-dates every revision to the new filename's date. See DECISIONS, 2026-08-21.
+md5 "<new export>.csv"                            # compare to metadata.source_file's file
 git checkout main -- data.json   # always start from the published version
-python3 csv_to_dashboard_json.py
+python3 csv_to_dashboard_json.py "<new export>.csv"   # pass it explicitly: the glob only
+                                 # matches 'SP Reports*.csv' and '[0-9]*-SurveyExport.csv',
+                                 # and silently ignores anything else
+# ⚠️ Re-running this against the August export reverts the 6.2.1 correction.
 
 # Build the payload that is safe to publish (strips committee notes):
 python3 build_public_payload.py                      # → public/data.json
@@ -42,18 +50,18 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
 
 | | state |
 |---|---|
-| `main` | `0dd8a17`, level with origin. August 2026 cycle, complete |
-| `public-deploy` | `38fbcea`, level with origin. **Live and current** |
+| `main` | `881e3e4`, level with origin. August 2026 cycle, complete, plus the 6.2.1 correction |
+| `public-deploy` | `5ca8cbc`, level with origin. **Live and current** |
 | BSCL Pages | serving **`public-deploy`** — `admin.html` 404 verified 2026-08-10 |
-| ISPE fork | **EXISTS and is correctly configured.** Forked 2026-08-10 15:23 UTC (hours after the line above was written). Pages on `public-deploy`, `admin.html` 404. `public-deploy` level with ours at `38fbcea` |
+| ISPE fork | Exists and is correctly configured (forked 2026-08-10 15:23 UTC; Pages on `public-deploy`, `admin.html` 404) — but its `public-deploy` is **stale at `38fbcea`, two publishes behind** (verified 2026-08-21). **Needs a manual Sync fork; see "Next session starts here" #1** |
 | BSCL repo | **public**, Team plan, **1 fork** (ISPE-SP, since 2026-08-10), 0 stars / 0 watchers |
-| `review-site` | pushed, **11 commits ahead of `main`, not merged.** The reviewer site, all three of Daniela's fixes, the 3.1.4 renumbering, and the embed layout fix |
+| `review-site` | **merged; level with `main` at `881e3e4`.** Carried the reviewer site, all three of Daniela's fixes, the 3.1.4 renumbering, and the embed layout fix |
 | Cloudflare | Pages `ispe-sp-review` + D1 `ispe-sp-review` + Access app "ISPE Strategic Plan Review" |
 | `new-csv-format-intake` | merged 2026-08-03 (`faa9a3d`); kept as a record only |
 
-**Working tree clean, all branches pushed.** `review-site` is deliberately unmerged: it carries
-changes to `index.html` and `admin.html` that should reach the public site in a single publish, once the
-numbering question is settled.
+**Working tree clean, all branches pushed.** `review-site` is no longer held back — the numbering question
+settled on 2026-08-20, so its `index.html` / `admin.html` changes went to the public site in the single
+publish they were being saved for (`884a501`).
 
 **Open items** (as of 2026-08-10):
 1. ~~**ISPE-SP forks + Pages on `public-deploy`**~~ — **done by ISPE, verified 2026-08-20.** They took both
@@ -265,24 +273,29 @@ recognized but deliberately not consumed, and any status cell that matched no kn
 the only thing standing between a malformed cycle and a plausible-looking wrong dashboard.
 
 ## Current state (as of this handoff, on `main` — and live on `public-deploy`)
-- **99 tactics, of which 95 are active and 4 are retired.** Active split: **37 On Track, 21 Not Started,
-  27 Completed, 10 Delayed** (August 2026 cycle).
-- **All 27 completed tactics carry a completion date**: 8 October 2025, 10 February 2026, 9 August 2026.
-  Of the nine August dates, **only three are genuine August completions** (4.2.2, 6.2.1, 8.2.2, dated by the
+- **99 tactics, of which 96 are active and 3 are retired.** Active split: **38 On Track, 22 Not Started,
+  26 Completed, 10 Delayed** (August 2026 cycle).
+- **All 26 completed tactics carry a completion date**: 8 October 2025, 10 February 2026, 8 August 2026.
+  Of the eight August dates, **only two are genuine August completions** (4.2.2, 8.2.2, dated by the
   transition rule); the other six record when the tactic was *logged*, not finished. See open item 4.
 - **11 of 14 committees reported.** Executive/Impact, Finance and Global Development / Strategic Planning
   did not; their tactics carried forward.
-- **Retired = 3.1.4, 3.1.5, 3.1.6, 3.1.7**, superseded by a proposed tactic 3.1.8 that **does not exist in
-  the plan yet**. They stay listed in goal 3.1 with a `RETIRED` badge and a dagger, and are excluded from
-  every progress count — rings, goal `n/m`, objective totals, all the summary cards, mini pills, at-risk.
-- **Revised / New = 17** on the card; the **Revisions section badge reads 21**. They differ on purpose: the
-  card excludes retired tactics so every card describes the same 95, the section includes them because being
+- **Retired = 3.1.5, 3.1.6, 3.1.7**, superseded by **3.1.4**, which was **revised in place** rather than
+  retired (2026-08-20, Daniela confirmed with Ursula). The earlier plan for a new 3.1.8 was dropped. The three
+  stay listed in goal 3.1 with a `RETIRED` badge and a dagger, and are excluded from every progress count —
+  rings, goal `n/m`, objective totals, all the summary cards, mini pills, at-risk.
+- **Revised / New = 18** on the card; the **Revisions section badge reads 21**. They differ on purpose: the
+  card excludes retired tactics so every card describes the same 96, the section includes them because being
   retired *is* the revision. See DECISIONS if this looks like a bug.
-- **Goal/objective progress is a plain count over active tactics** — goal 3.1 reads `3/3`, objective 3 reads
-  `5/9`. The old `x/10` scale is gone. Stored `progress_score` fields are intentionally unused.
-- **At Risk = 31** (21 Not Started + 10 Delayed, retired excluded) — **admin view only**. Up from 28 in July,
-  entirely from Objective 8: four of its tactics moved into Delayed in one cycle. **29 were reconfirmed this
-  cycle; 2 are carried forward.** The panel marks this per row — see "At Risk" under Key UI components.
+- **Goal/objective progress is a plain count over active tactics** — goal 3.1 reads `3/4`, objective 3 reads
+  `5/10`. The old `x/10` scale is gone. Stored `progress_score` fields are intentionally unused.
+- **At Risk = 32** (22 Not Started + 10 Delayed, retired excluded) — **admin view only**. Up from 28 in July,
+  driven by Objective 8: four of its tactics moved into Delayed in one cycle. **29 were reconfirmed this
+  cycle; 3 are carried forward** (3.1.4, 6.1.8, 7.1.7). The panel marks this per row — see "At Risk" under
+  Key UI components.
+- **6.2.1 is corrected, not survey-derived.** Membership reported it `Completed` in August; Daniela confirmed
+  with Anne that it is not, and its twin 6.1.5 says `In progress- on track` for the same work. Set by hand in
+  `data.json` — **a re-ingest of the August CSV reverts it.** See DECISIONS, 2026-08-21.
 - Header "As of …" comes from `metadata.as_of_date` (admin picker) and reads **August 2026**. The line under
   it — "Survey data through August 2026 · 11 committee responses this cycle" — comes from
   `metadata.cycle_label` / `cycle_committees`. Both are correct and agree.
