@@ -1,24 +1,30 @@
 # ISPE Strategic Plan Dashboard — Status / Handoff
 
-_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-21._
+_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-22._
 
-> **Next session starts here:** the live thread is #1.
-> 1. **The ISPE-SP fork is two publishes stale — chase the sync.** Their `public-deploy` sits at `38fbcea`
->    (verified 2026-08-21), missing `884a501` (Daniela's three fixes + the 3.1.4 renumbering) **and** `5ca8cbc`
->    (6.2.1 is not completed). So the ISPE-hosted site still says "EFFORTS" and still shows **6.2.1 as
->    Completed** — the precise thing Daniela asked us to remove. We cannot push to their fork; someone at
->    ISPE-SP must click **Sync fork → Update branch** *while viewing `public-deploy`*. Send-ready note in
->    "Handing the fork to ISPE-SP" below. Forking itself is **done** (2026-08-10, Pages correctly on
->    `public-deploy`, `admin.html` 404s).
-> 2. **Deploy the reviewer site.** The hosted-admin question is **decided and built** (2026-08-10):
+> **The August 2026 cycle is closed and all three surfaces are in sync (verified 2026-08-22).** Nothing is
+> pending publication. The next live thread is the ingest hardening in #1 — it matters at the *next* cycle,
+> not now.
+> 1. **Harden the ingest before the next cycle, or 6.2.1 silently reverts.** Two guards are designed and
+>    written up but **not built** (DECISIONS, 2026-08-21): a `metadata.source_hash` that refuses a CSV whose
+>    content is already ingested, and a loud warning for any unrecognized `*.csv` instead of silence. There is
+>    also no `STATUS_OVERRIDE` map, so **6.2.1's correction lives only in `data.json`** and any re-run against
+>    the August export overwrites it. Until then: `md5` every export against `metadata.source_file` first, and
+>    pass the path explicitly.
+> 2. ~~**The ISPE-SP fork is stale.**~~ **Synced by ISPE's admin, verified 2026-08-22:** their `public-deploy`
+>    is level with ours at `4669dac` — same commit, same tree. Note this is a **manual step every cycle**;
+>    forks do not auto-sync, and nothing on our side can detect or fix a missed one.
+> 3. **The reviewer site.** The hosted-admin question is **decided, built and deployed**:
 >    `review-site/` is a Cloudflare Pages + Access + D1 app where reviewers comment, flag and approve, and
 >    everyone sees everyone's. **Complete review** emails you that reviewer's full summary — one mail per
 >    reviewer per cycle, which is the right volume for a site that moves twice a year.
 >    **It is LIVE, gated and shared-ready:** https://ispe-sp-review.pages.dev — Cloudflare Access, verified
 >    end to end 2026-08-10 including a real completion email (`submissions.delivery = 'sent'`). Test rows
->    were cleared, so the August 2026 board is empty. This supersedes the Phase-6 Codespace step in
->    `MIGRATION-private-repo.md`.
-> 3. ~~**Daniela's review feedback is applied but not published.**~~ **Published 2026-08-20** as `884a501`
+>    were cleared, so the August 2026 board is empty. **Rebuilt and redeployed 2026-08-22** carrying the 6.2.1
+>    correction and both header removals. It is *generated* from `index.html` + the public payload, so those
+>    arrived by rebuilding — never edit the reviewer copy by hand. This supersedes the Phase-6 Codespace step
+>    in `MIGRATION-private-repo.md`.
+> 4. ~~**Daniela's review feedback is applied but not published.**~~ **Published 2026-08-20** as `884a501`
 >    — the three fixes plus the 3.1.4 renumbering reached `public-deploy` in a single copy-across, as
 >    intended. `review-site` is merged and level with `main`. **On our Pages this is live; on the ISPE fork
 >    it is not** — see #1.
@@ -50,13 +56,13 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
 
 | | state |
 |---|---|
-| `main` | `881e3e4`, level with origin. August 2026 cycle, complete, plus the 6.2.1 correction |
-| `public-deploy` | `5ca8cbc`, level with origin. **Live and current** |
+| `main` | `046f172`, level with origin. August 2026 cycle, complete, plus the 6.2.1 correction and both header removals |
+| `public-deploy` | `4669dac`, level with origin. **Live and current** |
 | BSCL Pages | serving **`public-deploy`** — `admin.html` 404 verified 2026-08-10 |
-| ISPE fork | Exists and is correctly configured (forked 2026-08-10 15:23 UTC; Pages on `public-deploy`, `admin.html` 404) — but its `public-deploy` is **stale at `38fbcea`, two publishes behind** (verified 2026-08-21). **Needs a manual Sync fork; see "Next session starts here" #1** |
+| ISPE fork | Exists, correctly configured (forked 2026-08-10 15:23 UTC; Pages on `public-deploy`, `admin.html` 404), and **in sync at `4669dac`** — synced by ISPE's admin, verified 2026-08-22. **Needs a manual Sync fork every cycle** |
 | BSCL repo | **public**, Team plan, **1 fork** (ISPE-SP, since 2026-08-10), 0 stars / 0 watchers |
-| `review-site` | **merged; level with `main` at `881e3e4`.** Carried the reviewer site, all three of Daniela's fixes, the 3.1.4 renumbering, and the embed layout fix |
-| Cloudflare | Pages `ispe-sp-review` + D1 `ispe-sp-review` + Access app "ISPE Strategic Plan Review" |
+| `review-site` | **fully merged into `main`** (its tip `da7ddc7` is an ancestor); now 4 commits behind and kept only as a record. Carried the reviewer site, all three of Daniela's fixes, the 3.1.4 renumbering, and the embed layout fix |
+| Cloudflare | Pages `ispe-sp-review` + D1 `ispe-sp-review` + Access app "ISPE Strategic Plan Review". **Redeployed 2026-08-22** from a rebuilt `dist/`, carrying all three August corrections |
 | `new-csv-format-intake` | merged 2026-08-03 (`faa9a3d`); kept as a record only |
 
 **Working tree clean, all branches pushed.** `review-site` is no longer held back — the numbering question
@@ -67,11 +73,12 @@ publish they were being saved for (`884a501`).
 1. ~~**ISPE-SP forks + Pages on `public-deploy`**~~ — **done by ISPE, verified 2026-08-20.** They took both
    branches (so they did untick "Copy the main branch only"), pointed Pages at **`public-deploy`** and not
    `main`, and their site serves `index.html` 200 with `admin.html`, `admin-server.py` and both scripts all
-   **404**. Their `public-deploy` is at `38fbcea`, identical to ours, and their live `data.json` carries
-   **0 committee notes**. The handoff note below is kept as the record of what was asked for.
+   **404**, and their live `data.json` carries **0 committee notes**. (Their `public-deploy` read `38fbcea`
+   at that check; it is **`4669dac` and level with ours as of 2026-08-22**.) The handoff note below is kept
+   as the record of what was asked for.
    **What remains is the recurring step:** each cycle, after we push to `public-deploy`, someone at ISPE must
-   open the fork, switch to `public-deploy`, and click **Sync fork → Update branch**. Their site is showing
-   the pre-feedback dashboard right now — that is **our** unpublished work, not their fork being stale.
+   open the fork, switch to `public-deploy`, and click **Sync fork → Update branch**. This was needed and
+   done on 2026-08-22, after the fork had drifted four publishes behind — nothing on our side detects it.
 2. **Daniela's feedback on the August cycle (2026-08-10).** Three points; the first two are done on
    `review-site` and live on the reviewer site, **not on the public dashboard**:
    - ~~"95 Efforts" -> "95 tactics"~~ done, and **finished properly on 2026-08-20**. The 08-10 pass claimed
@@ -209,7 +216,8 @@ intended to be embedded on the ISPE website as an `<iframe>`. No backend — eve
 - **ISPE (live since 2026-08-10):** https://ispe-sp.github.io/ISPE-Strategic-Plan-Dashboard/ ← the iframe
   `src`. Verified 2026-08-20: Pages source is **`public-deploy` / (root)**, status `built`; `/` 200,
   `data.json` 200 with **0 notes**; `admin.html`, `admin-server.py`, `csv_to_dashboard_json.py`,
-  `build_public_payload.py` all **404**. Their `public-deploy` = `38fbcea`, level with ours.
+  `build_public_payload.py` all **404**. Their `public-deploy` = **`4669dac`, level with ours** (re-verified
+  2026-08-22 after a manual Sync fork; it had drifted to four publishes behind).
   ⚠️ The fork's **default branch is `main`** — that is fine while Pages points at `public-deploy`, but it
   means anyone browsing their repo lands on the branch that carries `admin.html` and the notes. Do not
   suggest they "fix" Pages to follow the default.
