@@ -320,9 +320,10 @@ the only thing standing between a malformed cycle and a plausible-looking wrong 
   are the same document tracked under two goals and **they finally agree**. It took three flips to get here;
   the survey's `Completed` from Membership is simply wrong, and Strategic Planning's 6.1.5 answer was right
   throughout. **Do not "correct" 6.2.1 back to Completed from the CSV** — see DECISIONS, 2026-08-25.
-- **REV / NEW badges show only the CURRENT cycle** (Laura + Daniela, 2026-08-25). Gated by
-  `changedThisCycle(t)` on `revised_at` (or `new_at`) vs `metadata.cycle_date`, in **both** `index.html` and
-  `admin.html`. Row badges: **8 REV, 0 NEW**. NEW is zero because **nothing dates `is_new_in_plan`** — all
+- **REV / NEW badges show only the CURRENT cycle, and never on a retired tactic** (Laura + Daniela,
+  2026-08-25). Gated by `showsChangeBadge(t)` — `revised_at` (or `new_at`) at or after
+  `metadata.cycle_date`, **and** not retired, since being retired *is* the revision. In **both**
+  `index.html` and `admin.html`. Row badges: **5 REV, 0 NEW** (2.2.1, 2.2.2, 2.2.5, 3.1.4, 7.1.7). NEW is zero because **nothing dates `is_new_in_plan`** — all
   five flags are March-era and `ADOPTED_NEW_TACTICS` only suppresses duplicate listings. The helper already
   reads `new_at`, which does not exist yet, so NEW starts working the day something sets it. **A missing NEW
   badge is expected, not a bug.**

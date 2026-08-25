@@ -1021,3 +1021,19 @@ dated ("Documented in March 2026" / "August 2026"), badge still 23. **So the sec
 badge count (8) now differ on purpose.** That is the design, not drift: the badge answers "did this change in
 the report I am reading?", the section answers "what has ever changed?". Anyone reconciling those two numbers
 in future should not try to make them agree.
+
+## Retired tactics carry RETIRED and nothing else (2026-08-25)
+
+Laura: 3.1.5, 3.1.6 and 3.1.7 should read `RETIRED`, not `REV + RETIRED`. Being retired **is** the revision,
+so the two tags assert one fact twice and the row reads as two competing claims about the same tactic.
+
+Folded into the badge predicate rather than bolted on at the four call sites, so the rule lives in one place
+and both files ask the same question. `changedThisCycle` became **`showsChangeBadge(t)`**: a row carries a
+REV / NEW tag when the change belongs to this report **and** the tactic is not retired.
+
+This is the same reasoning already applied to *status* — a retired tactic shows none, so that superseded work
+stops competing for attention with work that is still live. Same argument, same outcome, now consistent.
+
+Row badges: **REV 8 → 5** (2.2.1, 2.2.2, 2.2.5, 3.1.4, 7.1.7); NEW stays 0. The Revisions history is
+untouched for the third time — it still lists all 18 revisions including the three retired ones, each dated,
+and still shows a Retired marker *there*, where it is informative rather than duplicative.
