@@ -1570,12 +1570,31 @@ function statusBadgeHTML(status) {
   return `<span class="status-badge ${cls}" data-glyph="${STATUS_GLYPH[status] || '○'}">${status}</span>`;
 }
 
+// A REV / NEW badge marks what changed in THIS report, not what has ever
+// changed. Without this the badges are permanent: the March 2026 tracker's 13
+// flags were still showing in August, sitting beside August's own and
+// indistinguishable on the row, so a six-month-old change looked current.
+// Agreed with Laura and Daniela, 2026-08-25. The full history is NOT lost - the
+// Revisions & New Tactics section still lists every revision and dates each one
+// ("Documented in March 2026"), which is the transparency Daniela asked to keep.
+// `new_at` does not exist in the data yet: nothing currently dates
+// is_new_in_plan, so NEW shows for nothing. Reading it here means the badge
+// starts working by itself the day something sets it.
+// No cycle_date (the stale-data fallback) badges nothing rather than everything.
+function changedThisCycle(t) {
+  const cycle = String((data.metadata && data.metadata.cycle_date) || '').slice(0, 10);
+  if (!cycle) return false;
+  const when = String((t && (t.revised_at || t.new_at)) || '').slice(0, 10);
+  return !!when && when >= cycle;
+}
+
 function renderTactic(t) {
   const visible = tacticVisible(t);
-  const revBadge = t.is_revised
+  const badgeCurrent = changedThisCycle(t);
+  const revBadge = (t.is_revised && badgeCurrent)
     ? ` <span style="display:inline-block;background:${data.changed_color||'#a02a93'};color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="Revised — see Changes section above">REV</span>`
     : '';
-  const newBadge = t.is_new_in_plan
+  const newBadge = (t.is_new_in_plan && badgeCurrent)
     ? ` <span style="display:inline-block;background:#15803d;color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="New tactic">NEW</span>`
     : '';
   const retired = isRetired(t);
