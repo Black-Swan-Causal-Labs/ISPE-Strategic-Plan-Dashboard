@@ -1,6 +1,6 @@
 # ISPE Strategic Plan Dashboard — Status / Handoff
 
-_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-24 (rev 2)._
+_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-25._
 
 > **The August 2026 cycle is closed and all three surfaces are in sync (verified 2026-08-22).** Nothing is
 > pending publication. The next live thread is the ingest hardening in #1 — it matters at the *next* cycle,
@@ -281,10 +281,10 @@ recognized but deliberately not consumed, and any status cell that matched no kn
 the only thing standing between a malformed cycle and a plausible-looking wrong dashboard.
 
 ## Current state (as of this handoff, on `main` — and live on `public-deploy`)
-- **99 tactics, of which 96 are active and 3 are retired.** Active split: **38 On Track, 22 Not Started,
-  27 Completed, 9 Delayed** (August 2026 cycle).
-- **All 27 completed tactics carry a completion date**: 8 October 2025, 10 February 2026, 9 August 2026.
-  Of the nine August dates, **only three are genuine August completions** (4.2.2, 6.2.1, 8.2.2, dated by the
+- **99 tactics, of which 96 are active and 3 are retired.** Active split: **39 On Track, 22 Not Started,
+  26 Completed, 9 Delayed** (August 2026 cycle).
+- **All 26 completed tactics carry a completion date**: 8 October 2025, 10 February 2026, 8 August 2026.
+  Of the eight August dates, **only two are genuine August completions** (4.2.2, 8.2.2, dated by the
   transition rule); the other six record when the tactic was *logged*, not finished. See open item 4.
 - **11 of 14 committees reported.** Executive/Impact, Finance and Global Development / Strategic Planning
   did not; their tactics carried forward.
@@ -306,11 +306,11 @@ the only thing standing between a malformed cycle and a plausible-looking wrong 
   **29 were reconfirmed this cycle; 1 is carried forward** (6.1.8). The panel marks this per row — see
   "At Risk" under Key UI components. It read 32 until 2026-08-24, when 3.1.4 and 7.1.7 were excluded as
   revised.
-- **6.2.1 has been flipped twice — it currently reads `Completed`, which is what the survey says.** Daniela
-  set it to in-progress on 2026-08-21 (confirmed with Anne); the reviewing admin asked for `Completed` back
-  on 2026-08-24 and that is what is live. **This one is contested, so check before changing it again.** Its
-  twin **6.1.5 — the same work under goal 6.1 — still reads `In progress- on track`**, so the two disagree
-  in the data right now. See DECISIONS, 2026-08-21 and 2026-08-24.
+- **6.2.1 and 6.1.5 are SETTLED: both `In Progress - On Track`** (Daniela, 2026-08-25, asked directly and
+  answering both at once — the opportunities pathway "has not been completed, but it is in progress"). They
+  are the same document tracked under two goals and **they finally agree**. It took three flips to get here;
+  the survey's `Completed` from Membership is simply wrong, and Strategic Planning's 6.1.5 answer was right
+  throughout. **Do not "correct" 6.2.1 back to Completed from the CSV** — see DECISIONS, 2026-08-25.
 - **At Risk excludes revised tactics** (2026-08-24, reviewer request): a revised tactic's status is carried
   forward from before the rewrite, so it is not evidence of risk. Tactics that are only *new* stay. This is
   a filter in `renderAtRisk()` in **`admin.html`**, not a data change.

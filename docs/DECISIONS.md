@@ -884,3 +884,41 @@ committee picking it cannot also report progress — 8 tactics did so this cycle
 would reproduce the reviewer's exact figures (9 delayed, 21 not started), but that behaviour existed once and
 was removed on purpose: it showed progress nobody had reported, precisely for the 3.1.4-3.1.7 family. Per
 tactic, from evidence, is the right granularity. A blanket rule is not.
+
+## 6.2.1 / 6.1.5: settled — both In Progress (2026-08-25)
+
+**This supersedes both earlier 6.2.1 entries and should be the last word.** Daniela, asked directly and
+answering both tactics together:
+
+> "Those two tactics refer to the update of the opportunities pathway. This has not been completed, but it is
+> in progress as there are ongoing activities that will support the update (e.g., FISPE engagement, the
+> benefits survey). I would say to mark as 'in progress' for both tactics."
+
+Both now read `In Progress - On Track`; 6.2.1 lost its August 2026 date. 6.1.5 was already correct.
+
+**The full history, because the shape of it is the lesson:**
+
+| when | 6.2.1 | who, and on what basis |
+|---|---|---|
+| August ingest | Completed | Membership's survey answer |
+| 2026-08-21 | In Progress | Daniela, via Anne — sourced, but only about 6.2.1 |
+| 2026-08-24 | Completed | reviewing admin, no reason given |
+| 2026-08-25 | **In Progress** | **Daniela, with a reason, covering both tactics** |
+
+Three flips in five days on one tactic. What ended it was not a better argument but a **better-scoped
+question**: asking about *both* tactics at once, of the person who owns the work. Each earlier round asked
+about 6.2.1 alone, so each answer left the other half of the same document contradicting it, and the
+contradiction kept regenerating the dispute.
+
+**The root cause was never a data-entry error — it is that one deliverable is tracked as two tactics under
+two goals, owned by two committees.** Membership said Completed for 6.2.1; Strategic Planning said in-progress
+for 6.1.5. Both answered honestly about the same document. The ingest has no cross-tactic consistency check
+and cannot have a useful one, because neither answer is malformed. ⚠️ **If a third cycle produces the same
+split, fix the instrument — merge them or cross-reference them in the survey — rather than adjudicating the
+answers again.**
+
+**Two things worth remembering.** A reviewer comment is not automatically authoritative: the admin's
+`Completed` was applied, published to three surfaces, and then reversed a day later by the person who owns
+the work. And the survey answer was wrong the whole time — Membership reported `Completed` in August, so
+**any re-ingest of the August export puts the wrong value back**. That is now the third hand-correction with
+that property.
