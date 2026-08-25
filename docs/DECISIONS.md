@@ -988,3 +988,36 @@ mechanisms and two of them are manual.
 **State at close:** `main` `ceaeb4d`, `public-deploy` `7464b0d` (live, byte-verified), ISPE fork level at
 `7464b0d`, reviewer `dist/` built and correct but possibly one deploy stale. 96 active tactics: 40 On Track,
 21 Not Started, 26 Completed, 9 Delayed. At Risk 30.
+
+## REV / NEW badges are scoped to the current report (2026-08-25)
+
+Laura noticed tactics that had "an updated status but still say REV", and others carrying **REV and NEW at
+once**. Both symptoms had the same cause: **the badges were permanent.**
+
+Three vintages were wearing the same tag — 8 revised in the August cycle (`revised_at` = 2026-08-04), 12
+flagged with **no date at all** (baked into `DEFAULT_DATA` from the March 2026 xlsx tracker), and 6.1.1 dated
+February 2026. On a tactic row they were indistinguishable, so a six-month-old change looked current. Left
+alone the set only grows — every cycle adds tags and none are ever removed, until eventually everything is
+badged and the badge means nothing.
+
+The March batch was also applied **unevenly**: 3.2.2 carries REV but 3.2.5 does not; 6.1.4 and 6.1.7 do but
+6.1.5 does not — though all were changed in that era. No principle is recoverable now. Dating the badge makes
+that irrelevant rather than requiring an archaeology exercise.
+
+**The rule** (Laura, Daniela agreeing): a tag marks what changed in *this* report. `changedThisCycle(t)`
+compares `revised_at` (or `new_at`) against `metadata.cycle_date`, in both `index.html` and `admin.html`.
+Row badges went **REV 18 → 8, NEW 5 → 0**. The REV+NEW contradiction (1.2.4, 1.2.5) vanished as a side
+effect — both are March-era, so neither badges.
+
+⚠️ **NEW is zero and will stay zero until something dates it.** All five `is_new_in_plan` flags come from the
+tracker, and `ADOPTED_NEW_TACTICS` only stops a survey proposal being listed twice — it never marks a tactic
+new in a cycle. The helper reads a `new_at` field that does not exist yet, deliberately: the badge starts
+working by itself the day one is written. **Flagged to Laura before shipping so an absent NEW tag is not
+read as a break.**
+
+**The history was explicitly preserved.** Daniela: *"I do like seeing the history of revisions - I think that
+is important for transparency."* The Revisions & New Tactics section is untouched — all 18 revisions, each
+dated ("Documented in March 2026" / "August 2026"), badge still 23. **So the section count (23) and the row
+badge count (8) now differ on purpose.** That is the design, not drift: the badge answers "did this change in
+the report I am reading?", the section answers "what has ever changed?". Anyone reconciling those two numbers
+in future should not try to make them agree.
