@@ -813,3 +813,46 @@ actually renders 23. A verification pass had marked it correct, because it compa
 `data.json` rather than against **the rendered page**. 21 is the right answer from the data; 23 is what the
 badge shows, because it adds the 2 `new_tactics` submitted this cycle. **Check UI claims by loading the
 page.** Data-derived agreement is not evidence about what a user sees.
+
+## Reviewer round 2: 6.2.1 flips back, and revised tactics leave At Risk (2026-08-24)
+
+Five comments from the reviewing admin on the Cloudflare site. **Two changed something; three were already
+true.** Worth reading as a set, because the pattern is that most reviewer comments are confirmations and the
+job is separating those from the ones that are not.
+
+**6.2.1 → Completed. This reverses the 2026-08-21 entry above, and it was contested.** Daniela had asked for
+in-progress, sourced ("communication with Anne") and reasoned (nobody should find a non-final document). The
+admin asked for `Completed` with no stated reason. **The contradiction was surfaced rather than applied**;
+John chose the admin's reading. Objective 6 → 7/14, Goal 6.2 → 5/6, plan-wide Completed → 27.
+
+What this restores is **what the export actually said** — Membership reported `Completed` in the August
+cycle. What it does *not* resolve is the underlying disagreement: **6.1.5 tracks the same work under goal 6.1
+and still reads `In progress- on track`**. Two committees, one document, opposite answers, and the dashboard
+now shows both. ⚠️ **6.2.1 has been flipped twice in four days. Do not change it a third time without asking
+who is deciding** — and if it comes up again, the fix is probably to reconcile 6.1.5 and 6.2.1 rather than
+to keep flipping one of them.
+
+**At Risk now excludes revised tactics** (3.1.4, 7.1.7 drop out; 30 total, 9 delayed, 21 not started, 29
+confirmed / 1 carried). The rationale: a revised tactic's status is carried forward from *before* the
+rewrite, so it describes work that no longer exists rather than work at risk.
+
+**The admin's own numbers are what identified the rule**, and this is the useful trick: "Total delayed = 9"
+and "Total = 21" only both hold if **revised** tactics are excluded while **new** ones stay. Excluding
+revised *and* new would have given 19 not started, not 21. Two quoted totals were enough to pin down an
+intent that the prose left ambiguous — when a reviewer quotes numbers, solve for the rule before asking.
+
+⚠️ **Accepted trade-off: 7.1.7 is genuinely `In Progress - Delayed` and now appears in no risk view at
+all.** The panel exists to surface what needs attention before publishing, and this hides one item from it.
+Flagged before the change, accepted. It also sits close to the "Revised / New is not a status" decision of
+2026-08-20 — it does not reintroduce a status, but it does let *revised* override a real status in one view.
+
+**Implemented as a filter in `renderAtRisk()` in `admin.html`, not as a data change.** At Risk is admin-only
+— `index.html` carries a stray `.at-risk-item` CSS rule and nothing else — so the public dashboard moved only
+via `data.json`. The reviewer site inherits the filter because `build_review_site.py` lifts the whole region
+between `const AT_RISK_STATUSES = [` and the SUMMARY comment out of `admin.html`; the edit sits inside that
+region and touches neither anchor, so the build's match assertions still pass.
+
+**The three no-ops.** All six tactics listed under "revisions" already carried the exact status quoted —
+3.2.2, 3.2.5, 6.1.4, 6.1.5, 6.1.7 on track and 4.2.4 not started. Note 3.2.5 and 6.1.5 are **not** flagged
+revised, so they do not appear in the Revisions panel at all; if the admin expected them there, that is a
+separate question nobody has asked yet.
