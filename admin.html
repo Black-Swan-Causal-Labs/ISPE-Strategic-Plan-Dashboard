@@ -1979,7 +1979,13 @@ function renderGoal(goal, oi, gi) {
 // is_new_in_plan, so NEW shows for nothing. Reading it here means the badge
 // starts working by itself the day something sets it.
 // No cycle_date (the stale-data fallback) badges nothing rather than everything.
-function changedThisCycle(t) {
+function showsChangeBadge(t) {
+  // A retired tactic is labelled RETIRED and nothing else. Being retired IS the
+  // revision, so REV beside it restates the same fact twice (Laura,
+  // 2026-08-25). This mirrors the existing rule that a retired tactic shows no
+  // status either - both exist so superseded work stops competing for attention
+  // with work that is still live.
+  if (isRetired(t)) return false;
   const cycle = String((data.metadata && data.metadata.cycle_date) || '').slice(0, 10);
   if (!cycle) return false;
   const when = String((t && (t.revised_at || t.new_at)) || '').slice(0, 10);
@@ -1994,7 +2000,7 @@ function renderTactic(t, oi, gi, ti) {
     : '';
   return `
   <tr class="${visible ? '' : 'hidden'}${retired ? ' tactic-retired' : ''}" data-tactic>
-    <td class="tactic-id" data-label="ID">${t.tactic_id || '-'}${t.is_revised && changedThisCycle(t) ? ` <span style="display:inline-block;background:${data.changed_color || '#a02a93'};color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="Revised — see Changes section above">REV</span>` : ''}${t.is_new_in_plan && changedThisCycle(t) ? ` <span style="display:inline-block;background:#15803d;color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="New tactic">NEW</span>` : ''}${retBadge}</td>
+    <td class="tactic-id" data-label="ID">${t.tactic_id || '-'}${t.is_revised && showsChangeBadge(t) ? ` <span style="display:inline-block;background:${data.changed_color || '#a02a93'};color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="Revised — see Changes section above">REV</span>` : ''}${t.is_new_in_plan && showsChangeBadge(t) ? ` <span style="display:inline-block;background:#15803d;color:white;font-size:0.6rem;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:2px;vertical-align:middle;" title="New tactic">NEW</span>` : ''}${retBadge}</td>
     <td data-label="Tactic">${esc(t.description)}</td>
     <td data-label="Status">
       <select class="status-select" data-status="${t.status}" ${retired ? 'disabled title="Retired - excluded from progress counts"' : ''} onchange="updateStatus(${oi},${gi},${ti},this.value,this)">
