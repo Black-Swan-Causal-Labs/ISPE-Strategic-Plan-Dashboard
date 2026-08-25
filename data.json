@@ -998,12 +998,13 @@
             {
               "tactic_id": "6.2.1",
               "description": "Update the opportunities pathway to include additional information for all ISPE members to become actively engaged",
-              "status": "In Progress - On Track",
+              "status": "Completed",
               "is_revised": false,
               "is_new_in_plan": false,
               "notes": "",
               "last_reported_by": "Membership",
-              "last_reported_at": null
+              "last_reported_at": null,
+              "completed_at": "August 2026"
             },
             {
               "tactic_id": "6.2.2",

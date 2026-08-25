@@ -1330,6 +1330,11 @@ function renderAtRisk() {
     // superseded work - flagging them as at risk would ask leadership to chase
     // tactics that no longer exist.
     o.goals.forEach(g => activeTactics(g).forEach(t => {
+      // A revised tactic's status is carried forward from before the rewrite,
+      // so it describes work that no longer exists rather than work at risk.
+      // Reviewer request, 2026-08-24 (3.1.4 and 7.1.7). Tactics that are only
+      // NEW to the plan stay: never started is exactly what at-risk means.
+      if (t.is_revised) return;
       if (AT_RISK_STATUSES.includes(t.status)) items.push({ t, g });
     }));
     if (items.length === 0) return;
