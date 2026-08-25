@@ -1,6 +1,6 @@
 # ISPE Strategic Plan Dashboard — Status / Handoff
 
-_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-24._
+_Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-24 (rev 2)._
 
 > **The August 2026 cycle is closed and all three surfaces are in sync (verified 2026-08-22).** Nothing is
 > pending publication. The next live thread is the ingest hardening in #1 — it matters at the *next* cycle,
@@ -281,8 +281,8 @@ recognized but deliberately not consumed, and any status cell that matched no kn
 the only thing standing between a malformed cycle and a plausible-looking wrong dashboard.
 
 ## Current state (as of this handoff, on `main` — and live on `public-deploy`)
-- **99 tactics, of which 96 are active and 3 are retired.** Active split: **37 On Track, 22 Not Started,
-  27 Completed, 10 Delayed** (August 2026 cycle).
+- **99 tactics, of which 96 are active and 3 are retired.** Active split: **38 On Track, 22 Not Started,
+  27 Completed, 9 Delayed** (August 2026 cycle).
 - **All 27 completed tactics carry a completion date**: 8 October 2025, 10 February 2026, 9 August 2026.
   Of the nine August dates, **only three are genuine August completions** (4.2.2, 6.2.1, 8.2.2, dated by the
   transition rule); the other six record when the tactic was *logged*, not finished. See open item 4.
@@ -313,8 +313,12 @@ the only thing standing between a malformed cycle and a plausible-looking wrong 
   in the data right now. See DECISIONS, 2026-08-21 and 2026-08-24.
 - **At Risk excludes revised tactics** (2026-08-24, reviewer request): a revised tactic's status is carried
   forward from before the rewrite, so it is not evidence of risk. Tactics that are only *new* stay. This is
-  a filter in `renderAtRisk()` in **`admin.html`**, not a data change — and **7.1.7 is genuinely Delayed and
-  now appears in no risk view at all**, which was accepted knowingly.
+  a filter in `renderAtRisk()` in **`admin.html`**, not a data change.
+- **7.1.7 is On Track, set by hand from the committee's own revision text** (2026-08-24). It read `Delayed`
+  because it missed a December 2025 date that has since been re-baselined to December 2027; Meetings
+  Oversight wrote "in progress as we have started working on it" in the same submission. **A re-ingest of the
+  August CSV reverts it** — the export says `Changed`, which carries no status, so the old Delayed would come
+  back. **3.1.4 is stale in the same way and was deliberately left alone** at `Not Started`.
 - **The public header is two lines and nothing else**: the title, then "2024-2029 | As of **August 2026**"
   from `metadata.as_of_date` (admin picker). The third line under it — the "survey stamp", which read
   "Survey data through August 2026 · 11 committee responses this cycle" — **is gone from `index.html`**

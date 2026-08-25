@@ -856,3 +856,31 @@ region and touches neither anchor, so the build's match assertions still pass.
 3.2.2, 3.2.5, 6.1.4, 6.1.5, 6.1.7 on track and 4.2.4 not started. Note 3.2.5 and 6.1.5 are **not** flagged
 revised, so they do not appear in the Revisions panel at all; if the admin expected them there, that is a
 separate question nobody has asked yet.
+
+## 7.1.7: a status taken from the committee's own words (2026-08-24)
+
+Set to `In Progress - On Track` by hand. It had read `Delayed` since March, carried forward because Meetings
+Oversight reported it `Changed` in August and "Changed" supplies no status.
+
+Their revision text in the same submission settles it: *"The is tactic is in progress as we have started
+working on it. The timeline for tactic 7.1.7. which was planned to be completed in December 2025 has been
+changed and is now December 2027 (in line with Gulf regional meeting planning)."* It was Delayed for missing
+December 2025 — a deadline that no longer exists. **The status is read out of the committee's own prose, not
+inferred from the absence of one.** Plan-wide Delayed 10 → 9, On Track 37 → 38.
+
+**3.1.4 was deliberately NOT changed**, though it is stale in exactly the same way — `Not Started` carried
+from February 2026, describing the tactic *before* it absorbed 3.1.5-3.1.7. The difference is evidence:
+7.1.7's committee wrote down its progress, 3.1.4's did not, and `Not Started` is plausibly correct for a
+newly consolidated tactic. **Guessing is what made 6.2.1 flip twice in four days.** Laura confirmed on a call
+(week of 2026-08-17) that 3.1.4 is the combination of 3.1.4-3.1.7, which confirms the revision, not a status.
+
+⚠️ **Neither correction survives a re-ingest.** The August export says `Changed` for both, which carries no
+status, so 7.1.7 would revert to Delayed. This is the third hand-correction now living only in `data.json`
+(with 6.2.1), and the second that a re-run would silently undo. The `STATUS_OVERRIDE` map keeps earning its
+place — see 2026-08-21.
+
+**A note on "Changed" as an option.** It sits in the same single-select as the four progress values, so a
+committee picking it cannot also report progress — 8 tactics did so this cycle. Mapping `Changed → On Track`
+would reproduce the reviewer's exact figures (9 delayed, 21 not started), but that behaviour existed once and
+was removed on purpose: it showed progress nobody had reported, precisely for the 3.1.4-3.1.7 family. Per
+tactic, from evidence, is the right granularity. A blanket rule is not.
