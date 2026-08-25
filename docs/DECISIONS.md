@@ -947,3 +947,44 @@ side rather than the committee's, and that is worth remembering if it is ever qu
 
 Plan-wide: Not Started 22 → 21, On Track 39 → 40. At Risk unchanged at 30 — 3.1.4 was already excluded as
 revised, and On Track would not qualify it anyway. **All five of the August review comments are now closed.**
+
+## Session log — 2026-08-20 to 08-25
+
+Six days that began as "ingest the last August export" and became a full review round. Recorded together
+because the individual entries above do not show the shape of it.
+
+**What actually happened.**
+
+1. **The "new" export was not new.** `Export 8.20.2026.csv` was byte-identical to the Aug 4 file already
+   ingested. Ingesting it would have re-dated eight revisions and changed nothing else. Nothing was ingested
+   this whole session — **every data change was made by hand.**
+2. **Daniela's review was published** (`884a501`): the three wording fixes and the 3.1.4 renumbering.
+3. **The header lost both its lines** — the committee-response count (a completeness claim missing its
+   denominator) and then the survey stamp itself (redundant with "As of August 2026").
+4. **A five-comment review round** from the admin on the Cloudflare site. Two changed something, three were
+   confirmations. Resolving them took 6.2.1 through three flips and pulled in Laura and Daniela.
+5. **All five comments are now closed** and published to every surface.
+
+**The four things worth carrying forward.**
+
+- **Numbers pin down intent better than prose.** The admin wrote "should be changed, not delayed" — ambiguous.
+  But "Total delayed = 9" and "Total = 21" hold together **only** if revised tactics are excluded and new ones
+  kept; excluding both gives 19. Two quoted totals identified a rule the words did not. When a reviewer quotes
+  a number, solve for the rule before asking.
+- **Verify UI claims by loading the page.** A documentation pass "verified" a badge as 21 by checking
+  `data.json`. The badge renders **23** — it adds the two `new_tactics`. The data was right and the claim was
+  wrong. Data-derived agreement is not evidence about what a reader sees.
+- **A reviewer comment is not automatically authoritative.** The admin's `Completed` for 6.2.1 was applied,
+  published to three surfaces, and reversed a day later by the person who owns the work. Surfacing the
+  contradiction before acting was right; treating the comment as an instruction would not have been.
+- **Scope the question to the thing, not the ticket.** 6.2.1 flipped three times because every round asked
+  about 6.2.1 alone, leaving 6.1.5 — the same document — to contradict whatever was decided. Asking about both
+  at once, of the owner, ended it in one reply.
+
+**Two habits this session should leave behind.** `md5` a new export against `metadata.source_file` before
+ingesting; and after any change, ask which of the **three** surfaces need it — they update by three different
+mechanisms and two of them are manual.
+
+**State at close:** `main` `ceaeb4d`, `public-deploy` `7464b0d` (live, byte-verified), ISPE fork level at
+`7464b0d`, reviewer `dist/` built and correct but possibly one deploy stale. 96 active tactics: 40 On Track,
+21 Not Started, 26 Completed, 9 Delayed. At Risk 30.

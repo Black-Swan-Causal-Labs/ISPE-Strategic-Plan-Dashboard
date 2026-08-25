@@ -2,32 +2,41 @@
 
 _Cold-start snapshot. Read this first, then `DECISIONS.md` for the "why". Last updated: 2026-08-25._
 
-> **The August 2026 cycle is closed and all three surfaces are in sync (verified 2026-08-22).** Nothing is
-> pending publication. The next live thread is the ingest hardening in #1 — it matters at the *next* cycle,
-> not now.
-> 1. **Harden the ingest before the next cycle, or 6.2.1 silently reverts.** Two guards are designed and
->    written up but **not built** (DECISIONS, 2026-08-21): a `metadata.source_hash` that refuses a CSV whose
->    content is already ingested, and a loud warning for any unrecognized `*.csv` instead of silence. There is
->    also no `STATUS_OVERRIDE` map, so **6.2.1's correction lives only in `data.json`** and any re-run against
->    the August export overwrites it. Until then: `md5` every export against `metadata.source_file` first, and
->    pass the path explicitly.
-> 2. ~~**The ISPE-SP fork is stale.**~~ **Synced by ISPE's admin, verified 2026-08-22:** their `public-deploy`
->    is level with ours at `4669dac` — same commit, same tree. Note this is a **manual step every cycle**;
->    forks do not auto-sync, and nothing on our side can detect or fix a missed one.
-> 3. **The reviewer site.** The hosted-admin question is **decided, built and deployed**:
->    `review-site/` is a Cloudflare Pages + Access + D1 app where reviewers comment, flag and approve, and
->    everyone sees everyone's. **Complete review** emails you that reviewer's full summary — one mail per
->    reviewer per cycle, which is the right volume for a site that moves twice a year.
->    **It is LIVE, gated and shared-ready:** https://ispe-sp-review.pages.dev — Cloudflare Access, verified
->    end to end 2026-08-10 including a real completion email (`submissions.delivery = 'sent'`). Test rows
->    were cleared, so the August 2026 board is empty. **Rebuilt and redeployed 2026-08-22** carrying the 6.2.1
->    correction and both header removals. It is *generated* from `index.html` + the public payload, so those
->    arrived by rebuilding — never edit the reviewer copy by hand. This supersedes the Phase-6 Codespace step
->    in `MIGRATION-private-repo.md`.
-> 4. ~~**Daniela's review feedback is applied but not published.**~~ **Published 2026-08-20** as `884a501`
->    — the three fixes plus the 3.1.4 renumbering reached `public-deploy` in a single copy-across, as
->    intended. `review-site` is merged and level with `main`. **On our Pages this is live; on the ISPE fork
->    it is not** — see #1.
+> **The August 2026 cycle is closed. All five reviewer comments are resolved and published
+> (verified 2026-08-25).** `main`, `public-deploy`, the ISPE fork and BSCL Pages all carry the same data.
+> Nothing is pending except #1 and #2 below.
+>
+> 1. **Redeploy the reviewer site — it is probably one or two changes stale.** `review-site/dist/` is built
+>    and correct (3.1.4, 6.2.1 and 7.1.7 all `In Progress - On Track`), but the last **confirmed** deploy was
+>    at the 7.1.7 change; the 6.2.1 and 3.1.4 pushes came after. `dist/` is gitignored, so committing does
+>    nothing for it. It is behind Access and cannot be verified from here — just redeploy:
+>    `cd review-site && npx wrangler pages deploy`.
+> 2. **Harden the ingest, or the next export silently undoes a week of decisions.** **Three corrections now
+>    live only in `data.json` and every one of them is contradicted by the August CSV:**
+>
+>    | tactic | dashboard says | the CSV says | set by |
+>    |---|---|---|---|
+>    | 6.2.1 | In Progress - On Track | `Completed` | Daniela, 2026-08-25 |
+>    | 7.1.7 | In Progress - On Track | `Changed` (no status) | its own revision text |
+>    | 3.1.4 | In Progress - On Track | `Changed` (no status) | John's call |
+>
+>    Re-running `csv_to_dashboard_json.py` against the August export reverts all three, prints success, and
+>    looks right. Three guards are designed and written up but **not built** (DECISIONS 2026-08-21, 08-25):
+>    a `STATUS_OVERRIDE` map, a `metadata.source_hash` that refuses an already-ingested CSV, and a loud
+>    warning for unrecognized `*.csv` files. **Until they exist: `md5` every new export against the file named
+>    in `metadata.source_file`, pass the path explicitly, and re-check those three tactics after any ingest.**
+> 3. **The ISPE fork needs a manual Sync fork every cycle.** In sync as of 2026-08-25, but it drifted four
+>    pushes behind during this session before being caught. Forks do not auto-update and **nothing on our side
+>    detects a missed sync** — their site just serves last cycle's numbers. This is the failure the private-repo
+>    migration in `MIGRATION-private-repo.md` exists to remove; it is still unexecuted.
+> 4. **The reviewer site is generated, never hand-edited.** `review-site/build_review_site.py` lifts regions
+>    out of `index.html` and `admin.html` with match-count assertions and ships the notes-stripped payload, so
+>    dashboard changes reach it by **rebuilding**. Live, gated and shared-ready at
+>    https://ispe-sp-review.pages.dev (Cloudflare Access + D1, verified end to end 2026-08-10 including a real
+>    completion email). This supersedes the Phase-6 Codespace step in `MIGRATION-private-repo.md`.
+> 5. **If 6.2.1 / 6.1.5 split again, fix the survey — do not adjudicate it a fourth time.** One document
+>    tracked as two tactics under two goals owned by two committees, both answering honestly. It flipped three
+>    times in five days. See DECISIONS, 2026-08-25.
 
 ## Start here (cold start)
 
@@ -56,13 +65,13 @@ python3 build_public_payload.py --check public/data.json   # must exit 0
 
 | | state |
 |---|---|
-| `main` | `046f172`, level with origin. August 2026 cycle, complete, plus the 6.2.1 correction and both header removals |
-| `public-deploy` | `4669dac`, level with origin. **Live and current** |
+| `main` | `ceaeb4d`, level with origin. August 2026 cycle plus every reviewer correction |
+| `public-deploy` | `7464b0d`, level with origin. **Live and current** — verified against the live URL 2026-08-25, byte-identical |
 | BSCL Pages | serving **`public-deploy`** — `admin.html` 404 verified 2026-08-10 |
-| ISPE fork | Exists, correctly configured (forked 2026-08-10 15:23 UTC; Pages on `public-deploy`, `admin.html` 404), and **in sync at `4669dac`** — synced by ISPE's admin, verified 2026-08-22. **Needs a manual Sync fork every cycle** |
+| ISPE fork | Exists, correctly configured (Pages on `public-deploy`, `admin.html` 404), **in sync at `7464b0d`** (verified 2026-08-25). Drifted four pushes behind mid-session before being caught. **Manual Sync fork every cycle** |
 | BSCL repo | **public**, Team plan, **1 fork** (ISPE-SP, since 2026-08-10), 0 stars / 0 watchers |
 | `review-site` | **fully merged into `main`** (its tip `da7ddc7` is an ancestor); now 4 commits behind and kept only as a record. Carried the reviewer site, all three of Daniela's fixes, the 3.1.4 renumbering, and the embed layout fix |
-| Cloudflare | Pages `ispe-sp-review` + D1 `ispe-sp-review` + Access app "ISPE Strategic Plan Review". **Redeployed 2026-08-22** from a rebuilt `dist/`, carrying all three August corrections |
+| Cloudflare | Pages `ispe-sp-review` + D1 + Access. `dist/` rebuilt 2026-08-25 and correct; **last confirmed deploy was at the 7.1.7 change — redeploy to be sure** |
 | `new-csv-format-intake` | merged 2026-08-03 (`faa9a3d`); kept as a record only |
 
 **Working tree clean, all branches pushed.** `review-site` is no longer held back — the numbering question
