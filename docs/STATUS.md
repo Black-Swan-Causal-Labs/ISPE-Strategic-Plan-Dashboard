@@ -281,7 +281,7 @@ recognized but deliberately not consumed, and any status cell that matched no kn
 the only thing standing between a malformed cycle and a plausible-looking wrong dashboard.
 
 ## Current state (as of this handoff, on `main` — and live on `public-deploy`)
-- **99 tactics, of which 96 are active and 3 are retired.** Active split: **39 On Track, 22 Not Started,
+- **99 tactics, of which 96 are active and 3 are retired.** Active split: **40 On Track, 21 Not Started,
   26 Completed, 9 Delayed** (August 2026 cycle).
 - **All 26 completed tactics carry a completion date**: 8 October 2025, 10 February 2026, 8 August 2026.
   Of the eight August dates, **only two are genuine August completions** (4.2.2, 8.2.2, dated by the
@@ -314,11 +314,12 @@ the only thing standing between a malformed cycle and a plausible-looking wrong 
 - **At Risk excludes revised tactics** (2026-08-24, reviewer request): a revised tactic's status is carried
   forward from before the rewrite, so it is not evidence of risk. Tactics that are only *new* stay. This is
   a filter in `renderAtRisk()` in **`admin.html`**, not a data change.
-- **7.1.7 is On Track, set by hand from the committee's own revision text** (2026-08-24). It read `Delayed`
-  because it missed a December 2025 date that has since been re-baselined to December 2027; Meetings
-  Oversight wrote "in progress as we have started working on it" in the same submission. **A re-ingest of the
-  August CSV reverts it** — the export says `Changed`, which carries no status, so the old Delayed would come
-  back. **3.1.4 is stale in the same way and was deliberately left alone** at `Not Started`.
+- **7.1.7 and 3.1.4 are both `In Progress - On Track`, set by hand** (2026-08-24 and 2026-08-25). Both were
+  reported `Changed`, which carries no status, so both had been showing a stale value carried forward from
+  before their revision — 7.1.7 `Delayed` from a December 2025 date since re-baselined to December 2027, and
+  3.1.4 `Not Started` from the tactic Executive called "overcome and included in the new tactic 3.1.8".
+  **A re-ingest of the August CSV reverts both.** With 6.2.1 that is **three hand-corrections that a re-run
+  silently undoes** — see the ingest hardening in "Next session starts here".
 - **The public header is two lines and nothing else**: the title, then "2024-2029 | As of **August 2026**"
   from `metadata.as_of_date` (admin picker). The third line under it — the "survey stamp", which read
   "Survey data through August 2026 · 11 committee responses this cycle" — **is gone from `index.html`**

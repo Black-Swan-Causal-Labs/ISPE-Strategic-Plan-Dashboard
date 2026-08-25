@@ -922,3 +922,28 @@ answers again.**
 the work. And the survey answer was wrong the whole time — Membership reported `Completed` in August, so
 **any re-ingest of the August export puts the wrong value back**. That is now the third hand-correction with
 that property.
+
+## 3.1.4: In Progress - On Track, and the reviewer's numbers finally match everywhere (2026-08-25)
+
+The last open item from the August review. The comment was *"3.1.4 should be changed, not Not Started.
+Total = 21"*. Excluding revised tactics from At Risk (2026-08-24) delivered 21 **in that panel only** — the
+summary row still counted 3.1.4 and read 22, and its row still showed a `Not Started` pill. Setting the
+status makes 21 true everywhere.
+
+**Why the old status was meaningless.** The survey's explanation column for 3.1.4 reads *"overcome and
+included in the new tactic 3.1.8"* — Executive said of it exactly what they said of 3.1.5-3.1.7, which were
+retired. Old 3.1.4 was retired in substance; it kept its number only because the replacement was renumbered
+from 3.1.8 (Daniela with Ursula, 2026-08-20). So the tactic carried a **superseded tactic's February status**
+while its description was the consolidated one. Its three retired siblings show no status pill at all.
+
+**Two options, and the one not taken.** Suppressing the pill — applying the existing retired-tactic rule,
+which exists because "showing its last one would put superseded work back into the reader's sense of
+progress" — was the more literally honest option, but it would have broken the published note that "the four
+statuses above sum to Total (96)". Setting the status keeps that invariant. **I flagged that no committee
+reported progress on the consolidated tactic and that a blanket `Changed → On Track` rule was removed once
+before for this very family; John's call was to set it directly.** That keeps it a per-tactic decision rather
+than a reinstated rule, which is the right granularity — but it does assert progress from the dashboard's
+side rather than the committee's, and that is worth remembering if it is ever questioned.
+
+Plan-wide: Not Started 22 → 21, On Track 39 → 40. At Risk unchanged at 30 — 3.1.4 was already excluded as
+revised, and On Track would not qualify it anyway. **All five of the August review comments are now closed.**
